@@ -167,7 +167,7 @@
                                     <!-- Social Icons will be injected here -->
                                 </div>
                                 <div id="preview-buttons" class="px-4 py-4 space-y-3">
-                                   <a href="#" id="download-vcf-btn" class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center text-center"><i class="fas fa-download mr-2"></i>Download Contact</a>
+                                   <a href="#" id="download-vcf-btn" class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center text-center hidden"><i class="fas fa-download mr-2"></i>Download Contact</a>
                                     <!-- Custom Buttons will be injected here -->
                                 </div>
                                  <div id="preview-map-container" class="mt-4 hidden">
@@ -192,6 +192,9 @@
                     <div>
                         <label for="script-url" class="block text-sm font-medium text-[var(--text-secondary)]">Google Apps Script URL</label>
                         <input type="url" id="script-url" placeholder="Enter your Web App URL" class="mt-1 block w-full rounded-md border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                    </div>
+                     <div class="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-lg">
+                        <p class="text-sm">After saving, the app will reload all profiles from your Google Sheet. You must re-deploy your script as a Web App to get a URL.</p>
                     </div>
                     <div class="text-right">
                         <button id="save-settings-btn" class="btn-primary">Save Settings</button>
@@ -295,6 +298,17 @@
 
         function handleRouting() {
             const hash = window.location.hash.substring(1);
+            if (!scriptUrl) {
+                showPage('page-settings');
+                 userGrid.innerHTML = `<div class="col-span-full text-center p-8 bg-[var(--card-bg)] rounded-lg shadow">
+                    <h2 class="text-2xl font-bold mb-2">Welcome!</h2>
+                    <p class="text-[var(--text-secondary)] mb-4">Please set your Google Apps Script URL in the settings to get started.</p>
+                    <button id="go-to-settings-btn" class="btn-primary">Go to Settings</button>
+                </div>`;
+                document.getElementById('go-to-settings-btn').addEventListener('click', () => window.location.hash = 'view=settings');
+                return;
+            }
+
             if (hash.startsWith('user=')) {
                 loadPublicProfile(hash.substring(5));
             } else if (hash.startsWith('edit=')) {
@@ -313,9 +327,8 @@
 
         // --- DATA FETCHING ---
         async function fetchFromScript(action, params = {}) {
-            if (!scriptUrl) {
-                return { status: 'error', message: 'Script URL not set' };
-            }
+            if (!scriptUrl) return null;
+            
             const url = new URL(scriptUrl);
             url.searchParams.append('action', action);
             for (const key in params) {
@@ -326,35 +339,24 @@
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
                 if (result.status === 'error') throw new Error(result.message);
-                return { status: 'success', data: result.data };
+                return result.data;
             } catch (error) {
                 console.error('Fetch error:', error);
                 showToast(`Error: ${error.message}`, true);
-                return { status: 'error', message: error.message };
+                return null;
             }
         }
 
         async function postToScript(action, data) {
-             if (!scriptUrl) {
-                showToast('Please set your Google Apps Script URL in Settings.', true);
-                return { status: 'error', message: 'Script URL not set' };
-            }
+             if (!scriptUrl) return null;
             try {
-                // NOTE: Removing 'no-cors' mode allows for proper error handling, like seeing CORS
-                // errors in the console. Your Google Apps Script must be correctly deployed to 
-                // handle requests from this web app.
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
+                    mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action, data })
                 });
-
-                // This is an optimistic success response. A robust implementation would involve
-                // the Apps Script returning a JSON confirmation message.
-                if (response.ok || response.type === 'opaque') {
-                     return { status: 'success' };
-                }
-                throw new Error(`Server responded with status: ${response.status}`);
+                return { status: 'success' };
             } catch (error) {
                 console.error('POST error:', error);
                 showToast(`Save Error: ${error.message}`, true);
@@ -364,56 +366,78 @@
 
         // --- HOMEPAGE LOGIC ---
         async function loadHomepage() {
-            const result = await fetchFromScript('getAllUsers');
-            if (result.status === 'success') {
-                allUsers = result.data;
-                renderUserGrid(allUsers);
-            } else {
-                allUsers = []; // Clear any old data
-                if (result.message === 'Script URL not set') {
-                    userGrid.innerHTML = `
-                        <div class="col-span-full text-center text-[var(--text-secondary)] p-8 bg-[var(--card-bg)] rounded-lg shadow">
-                            <h2 class="text-2xl font-bold mb-4">Welcome!</h2>
-                            <p class="mb-6">To get started, please add your Google Apps Script Web App URL in the settings.</p>
-                            <button onclick="window.location.hash = 'view=settings'" class="btn-primary">Go to Settings</button>
-                        </div>
-                    `;
-                } else {
-                     userGrid.innerHTML = `<p class="col-span-full text-center text-[var(--text-secondary)]">Could not load profiles. ${result.message}</p>`;
-                }
-            }
+            showToast('Loading profiles...');
+            allUsers = await fetchFromScript('getAllUsers');
+            renderUserGrid(allUsers);
             showPage('page-home');
         }
 
         function renderUserGrid(users) {
             userGrid.innerHTML = '';
             if (!users || users.length === 0) {
-                // This case is now mostly handled by loadHomepage, but kept as a fallback.
                 userGrid.innerHTML = '<p class="col-span-full text-center text-[var(--text-secondary)]">No profiles found in the spreadsheet.</p>';
                 return;
             }
             users.forEach(user => {
+                // Define business fields and calculate completion progress
+                const businessFields = [ 'organization', 'title', 'role', 'work_url', 'work_email', 'work_phone', 'work_fax', 'social_linkedin', 'location', 'profile_picture', 'header_image' ];
+                const totalFields = businessFields.length;
+                let completedFields = businessFields.filter(field => user[field]).length;
+                const progressPercentage = totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
+
+                const publicUrl = `${window.location.origin}${window.location.pathname}#user=${user.uid}`;
                 const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+                
                 const card = document.createElement('div');
-                card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
-                card.addEventListener('click', () => { window.location.hash = `edit=${user.uid}`; });
+                card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden flex flex-col transition-transform duration-300 hover:-translate-y-1';
+                
                 const headerStyle = user.header_image ? `background-image: url('${user.header_image}')` : `background-color: ${user.header_color || 'black'}`;
+                
                 card.innerHTML = `
                     <div class="h-24 bg-cover bg-center" style="${headerStyle}"></div>
                     <div class="p-4 flex flex-col items-center -mt-12">
                         <img src="${user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC'}" class="w-20 h-20 rounded-full border-4 border-[var(--card-bg)] object-cover">
                         <h3 class="mt-2 text-lg font-bold text-center">${fullName || 'Unnamed Profile'}</h3>
-                        <p class="text-sm text-[var(--text-secondary)] text-center">${user.title || ''}${user.organization ? ' at ' + user.organization : ''}</p>
+                        <p class="text-sm text-[var(--text-secondary)] text-center mb-4">${user.title || ''}${user.organization ? ' at ' + user.organization : ''}</p>
+                    </div>
+                    <div class="px-4 pb-4 space-y-4 flex-grow flex flex-col justify-end">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-xs font-medium text-[var(--text-secondary)]">Profile Completion</span>
+                                <span class="text-xs font-medium text-[var(--text-secondary)]">${Math.round(progressPercentage)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-[var(--text-secondary)]">Public URL</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="text" value="${publicUrl}" class="text-xs bg-gray-100 dark:bg-gray-700 p-1 rounded-md w-full flex-grow cursor-default" readonly>
+                                <button title="Copy URL" class="copy-btn shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" data-url="${publicUrl}"><i class="fas fa-copy"></i></button>
+                                <a href="${publicUrl}" target="_blank" title="Open URL" class="external-link-btn shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><i class="fas fa-external-link-alt"></i></a>
+                            </div>
+                        </div>
+                        <button class="edit-profile-btn mt-4 w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-2 rounded-md font-semibold text-sm transition-colors">Edit Profile</button>
                     </div>`;
+
+                // Add event listeners programmatically to handle clicks and stop propagation
+                card.querySelector('.edit-profile-btn').addEventListener('click', () => { window.location.hash = `edit=${user.uid}`; });
+                card.querySelector('.copy-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    copyToClipboard(e.currentTarget.dataset.url, 'Public URL');
+                });
+                card.querySelector('.external-link-btn').addEventListener('click', (e) => { e.stopPropagation(); });
+
                 userGrid.appendChild(card);
             });
         }
 
         // --- EDITOR LOGIC ---
         async function loadEditorForUser(userId) {
-            const result = await fetchFromScript('getUser', { id: userId });
-            if (result.status === 'success' && result.data) {
-                currentEditingUser = JSON.parse(JSON.stringify(result.data));
+            const user = await fetchFromScript('getUser', { id: userId });
+            if (user) {
+                currentEditingUser = JSON.parse(JSON.stringify(user));
                 renderEditorDisplay(currentEditingUser);
                 updatePreview(currentEditingUser);
                 showPage('page-editor');
@@ -446,7 +470,7 @@
 
             let nameHtml = `
                 <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
-                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">User Info</h3>
+                    <h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">User Info</h3>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         ${createDisplayField('Full Name', [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' '))}
                         ${createDisplayField('Title', user.title)}
@@ -456,9 +480,18 @@
                 </div>`;
             
             const publicUrl = `${window.location.origin}${window.location.pathname}#user=${user.uid}`;
+            const vcfUrlField = user.vcf_url ? `
+                <div class="relative">
+                    <label class="block text-sm font-medium text-[var(--text-secondary)]">Downloadable vCard URL</label>
+                    <input type="text" value="${user.vcf_url}" class="mt-1 block w-full rounded-md border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2 pr-10" readonly>
+                    <button type="button" class="absolute inset-y-0 right-0 top-6 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" onclick="copyToClipboard('${user.vcf_url}', 'vCard URL')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+            ` : '';
             let settingsHtml = `
                 <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
-                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Settings & Links</h3>
+                    <h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">Settings & Links</h3>
                     <div class="space-y-4">
                          <div class="relative">
                            <label class="block text-sm font-medium text-[var(--text-secondary)]">Public Profile URL</label>
@@ -467,6 +500,7 @@
                                <i class="fas fa-copy"></i>
                            </button>
                        </div>
+                       ${vcfUrlField}
                         ${createEditableField('Profile Picture URL', 'profile_picture', user.profile_picture || '')}
                         ${createEditableField('Header Image URL', 'header_image', user.header_image || '')}
                         ${createEditableField('Footer Logo URL', 'footer_logo', user.footer_logo || '')}
@@ -513,6 +547,15 @@
             document.getElementById('preview-profile-picture').src = user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC';
             document.getElementById('preview-footer-logo').src = user.footer_logo || 'https://placehold.co/70x70/e2e8f0/64748b?text=LOGO';
             document.getElementById('preview-footer-container').style.backgroundColor = user.primary_color || 'transparent';
+
+            const downloadBtn = document.getElementById('download-vcf-btn');
+            if (user.vcf_url && user.vcf_url.startsWith('http')) {
+                downloadBtn.href = user.vcf_url;
+                downloadBtn.target = '_blank';
+                downloadBtn.classList.remove('hidden');
+            } else {
+                downloadBtn.classList.add('hidden');
+            }
 
             const mapContainer = document.getElementById('preview-map-container');
             if (user.location) {
@@ -562,10 +605,9 @@
 
         // --- PUBLIC PROFILE LOGIC ---
         async function loadPublicProfile(userId) {
-            const result = await fetchFromScript('getUser', { id: userId });
+            const user = await fetchFromScript('getUser', { id: userId });
             const publicPage = document.getElementById('page-public-view');
-            if(result.status === 'success' && result.data) {
-                const user = result.data;
+            if(user) {
                 // Reuse preview logic to build public page
                 publicPage.innerHTML = `<div class="max-w-[450px] mx-auto">${document.querySelector('.lg\\:w-\\[400px\\] .sticky').innerHTML}</div>`;
                 // Disable editor interactions for public view
@@ -596,12 +638,12 @@
                 urlInput.value = '';
             }
             buttonModal.classList.remove('modal-hidden');
-            buttonModal.classList.add('flex'); // Make it visible and a flex container
+            buttonModal.classList.add('flex');
         }
 
         function closeButtonModal() {
             buttonModal.classList.add('modal-hidden');
-            buttonModal.classList.remove('flex'); // Hide it and remove flex
+            buttonModal.classList.remove('flex');
         }
 
         document.getElementById('modal-save-btn').addEventListener('click', () => {
@@ -715,8 +757,7 @@
                 scriptUrl = newUrl;
                 showToast('Settings saved!');
                 window.location.hash = '';
-                // Instead of reloading, just call handleRouting to show the homepage with new data
-                handleRouting();
+                location.reload(); // Reload to re-initialize with the new script URL
             } else {
                 showToast('URL cannot be empty.', true);
             }
@@ -740,3 +781,4 @@
     </script>
 </body>
 </html>
+

@@ -71,14 +71,21 @@
 
         /* --- Top Menu Bar --- */
         .top-menu-bar {
-            position: fixed; top: 2rem; left: 50%;
-            transform: translateX(-50%); width: calc(100% - 2rem);
-            max-width: 1480px; background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            box-shadow: var(--shadow); border: 0px solid var(--input-border);
-            border-radius: 12px; padding: 0 1rem;
-            transition: top 0.3s ease-in-out; z-index: 1000;
-        }
+            position: fixed; 
+            top: 2rem; 
+            left: 50%;
+            transform: translateX(-50%); 
+            width: calc(100% - 2rem);
+            max-width: 1480px; 
+            background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow); 
+            border: 0px solid var(--input-border);
+            border-radius: 12px; 
+            padding: 0 1rem;
+            transition: top 0.3s ease-in-out; 
+                   }
         .top-menu-content { height: 80px; display: flex; align-items: center; justify-content: space-between; }
         .logo-container { display: flex; align-items: center; gap: 1rem; }
         #appLogo { height: 40px; width: 40px; object-fit: cover; border-radius: 8px; }

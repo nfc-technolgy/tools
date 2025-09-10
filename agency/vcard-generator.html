@@ -93,7 +93,8 @@
             left: 50%;
             transform: translateX(-50%);
             width: calc(100% - 2rem);
-            max-width: 1480px;
+            max-width: 1200px;
+            z-index: 1100;
             background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
@@ -181,8 +182,6 @@
             </div>
         
             <div class="top-menu-actions">
-                <!-- NEW: Sync to Google Sheet Button -->
-                <button class="fab" id="syncToSheetBtn" title="Sync to Google Sheet"><i class="fas fa-table"></i></button>
                 <div class="fab" id="viewSavedSignaturesBtn" title="View Saved Profiles"><i class="fas fa-bookmark"></i></div>
                 <!-- Home Icon -->
                 <div class="fab" title="Homepage" onclick="window.open('https://bebell-digital-solutions.github.io/easylistings-agency', '_self')"><i class="fa fa-home"></i></div>  
@@ -414,8 +413,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // --- STATE & DATA ---
         const translations = {
-            en: { app_title: "vCard Creator", header_title: "vCard Creator", header_subtitle: "Generate your personal vCard file easily.", section_name: "Name", name_prefix: "Prefix", name_suffix: "Suffix", name_first: "First Name", name_middle: "Middle Name", name_last: "Last Name", name_nickname: "Nickname", section_work: "Work", work_org: "Organization", work_title: "Title", work_role: "Role", work_url: "Work URL", section_emails: "Emails", email_personal: "Email", email_work: "Work Email", section_phones: "Phones", phone_home: "Home Phone", phone_work: "Work Phone", phone_cell: "Cell Phone", phone_pager: "Pager", phone_home_fax: "Home Fax", phone_work_fax: "Work Fax", section_home_address: "Home Address", section_work_address: "Work Address", address_street: "Street", address_city: "City", address_state: "State / Province", address_zip: "Postal Code", address_country: "Country", section_images: "Images", images_photo_upload: "Upload Photo", images_logo_upload: "Upload Logo", section_social: "Social", social_whatsapp: "WhatsApp", section_other: "Other", other_note: "Note", preview_title: "Preview", preview_placeholder_name: "Your Name", preview_placeholder_title_org: "Title at Organization", preview_social: "Social", download_button: "Download vCard", footer_text: "Developed with ❤️ by Bebell Digital Solutions.", save_profile_button: "Save Profile", profiles_title: "Profiles", new_profile_button: "New Profile", profile_name_placeholder: "Unnamed Profile", settings_save: "Save Configuration", generating_button: "Generating...", preview_contact: "Contact Information", preview_work_address: "Work Address", preview_home_address: "Home Address", preview_note: "Note", no_profiles_text: "No profiles saved yet." },
-            es: { app_title: "Creador de vCard", header_title: "Creador de vCard", header_subtitle: "Genere su archivo vCard personal fácilmente.", section_name: "Nombre", name_prefix: "Prefijo", name_suffix: "Sufijo", name_first: "Nombre", name_middle: "Segundo Nombre", name_last: "Apellido", name_nickname: "Apodo", section_work: "Trabajo", work_org: "Organización", work_title: "Título", work_role: "Rol", work_url: "URL del Trabajo", section_emails: "Correos Electrónicos", email_personal: "Correo", email_work: "Correo del Trabajo", section_phones: "Teléfonos", phone_home: "Teléfono de Casa", phone_work: "Teléfono del Trabajo", phone_cell: "Celular", phone_pager: "Buscapersonas", phone_home_fax: "Fax de Casa", phone_work_fax: "Fax del Trabajo", section_home_address: "Dirección de Casa", section_work_address: "Dirección del Trabajo", address_street: "Calle", address_city: "Ciudad", address_state: "Estado / Provincia", address_zip: "Código Postal", address_country: "País", section_images: "Imágenes", images_photo_upload: "Subir Foto", images_logo_upload: "Subir Logo", section_social: "Redes Sociales", social_whatsapp: "WhatsApp", section_other: "Otro", other_note: "Nota", preview_title: "Vista Previa", preview_placeholder_name: "Su Nombre", preview_placeholder_title_org: "Título en Organización", preview_social: "Redes Sociales", download_button: "Descargar vCard", footer_text: "Desarrollado con ❤️ por Bebell Digital Solutions.", save_profile_button: "Guardar Perfil", profiles_title: "Perfiles", new_profile_button: "Nuevo Perfil", profile_name_placeholder: "Perfil sin Nombre", settings_save: "Guardar Configuración", generating_button: "Generando...", preview_contact: "Información de Contacto", preview_work_address: "Dirección de Trabajo", preview_home_address: "Dirección de Casa", preview_note: "Nota", no_profiles_text: "Aún no hay perfiles guardados." }
+            en: { app_title: "vCard Creator", header_title: "vCard Creator", header_subtitle: "Generate your personal vCard file easily.", section_name: "Name", name_prefix: "Prefix", name_suffix: "Suffix", name_first: "First Name", name_middle: "Middle Name", name_last: "Last Name", name_nickname: "Nickname", section_work: "Work", work_org: "Organization", work_title: "Title", work_role: "Role", work_url: "Work URL", section_emails: "Emails", email_personal: "Email", email_work: "Work Email", section_phones: "Phones", phone_home: "Home Phone", phone_work: "Work Phone", phone_cell: "Cell Phone", phone_pager: "Pager", phone_home_fax: "Home Fax", phone_work_fax: "Work Fax", section_home_address: "Home Address", section_work_address: "Work Address", address_street: "Street", address_city: "City", address_state: "State / Province", address_zip: "Postal Code", address_country: "Country", section_images: "Images", images_photo_upload: "Upload Photo", images_logo_upload: "Upload Logo", section_social: "Social", social_whatsapp: "WhatsApp", section_other: "Other", other_note: "Note", preview_title: "Preview", preview_placeholder_name: "Your Name", preview_placeholder_title_org: "Title at Organization", preview_social: "Social", download_button: "Download vCard", footer_text: "Developed with ❤️ by Bebell Digital Solutions.", save_profile_button: "Save Profile", profiles_title: "Profiles", new_profile_button: "New Profile", profile_name_placeholder: "Unnamed Profile", settings_save: "Save Configuration", generating_button: "Generating...", preview_contact: "Contact Information", preview_work_address: "Work Address", preview_home_address: "Home Address", preview_note: "Note", no_profiles_text: "No profiles saved yet.", saving_button: "Saving...", save_success_local: "Profile saved to device!", save_success_synced: "Profile saved and synced!", save_fail_sync: "Saved locally, but sync failed.", save_fail_config: "Saved locally. Configure Sheet URL to sync." },
+            es: { app_title: "Creador de vCard", header_title: "Creador de vCard", header_subtitle: "Genere su archivo vCard personal fácilmente.", section_name: "Nombre", name_prefix: "Prefijo", name_suffix: "Sufijo", name_first: "Nombre", name_middle: "Segundo Nombre", name_last: "Apellido", name_nickname: "Apodo", section_work: "Trabajo", work_org: "Organización", work_title: "Título", work_role: "Rol", work_url: "URL del Trabajo", section_emails: "Correos Electrónicos", email_personal: "Correo", email_work: "Correo del Trabajo", section_phones: "Teléfonos", phone_home: "Teléfono de Casa", phone_work: "Teléfono del Trabajo", phone_cell: "Celular", phone_pager: "Buscapersonas", phone_home_fax: "Fax de Casa", phone_work_fax: "Fax del Trabajo", section_home_address: "Dirección de Casa", section_work_address: "Dirección del Trabajo", address_street: "Calle", address_city: "Ciudad", address_state: "Estado / Provincia", address_zip: "Código Postal", address_country: "País", section_images: "Imágenes", images_photo_upload: "Subir Foto", images_logo_upload: "Subir Logo", section_social: "Redes Sociales", social_whatsapp: "WhatsApp", section_other: "Otro", other_note: "Nota", preview_title: "Vista Previa", preview_placeholder_name: "Su Nombre", preview_placeholder_title_org: "Título en Organización", preview_social: "Redes Sociales", download_button: "Descargar vCard", footer_text: "Desarrollado con ❤️ por Bebell Digital Solutions.", save_profile_button: "Guardar Perfil", profiles_title: "Perfiles", new_profile_button: "Nuevo Perfil", profile_name_placeholder: "Perfil sin Nombre", settings_save: "Guardar Configuración", generating_button: "Generando...", preview_contact: "Información de Contacto", preview_work_address: "Dirección de Trabajo", preview_home_address: "Dirección de Casa", preview_note: "Nota", no_profiles_text: "Aún no hay perfiles guardados.", saving_button: "Guardando...", save_success_local: "¡Perfil guardado en el dispositivo!", save_success_synced: "¡Perfil guardado y sincronizado!", save_fail_sync: "Guardado localmente, pero falló la sincronización.", save_fail_config: "Guardado local. Configure la URL de la hoja para sincronizar." }
         };
         let currentLang = localStorage.getItem('vcard-lang') || 'es';
         let profiles = [];
@@ -439,9 +438,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const panelOverlay = document.getElementById('panel-overlay');
         const photoUpload = document.getElementById('photo-upload');
         const logoUpload = document.getElementById('logo-upload');
-        // NEW: Google Sheet sync button
-        const syncToSheetBtn = document.getElementById('syncToSheetBtn');
-
 
         // --- FUNCTIONS ---
         const showToast = (message) => {
@@ -457,65 +453,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }, 300);
             }, 3000);
         };
-        
-        // NEW: Function to sync data to Google Sheet
-        const syncToGoogleSheet = async () => {
-            // !!! IMPORTANT !!!
-            // REPLACE 'YOUR_WEB_APP_URL' with the URL you get after deploying the Google Apps Script.
-            // See instructions.md for details.
-            const webAppUrl = 'https://script.google.com/macros/s/AKfycbwDjkfFy55zKWkjxnOrgP4jBp9ai1dwbxdL0gj2CkeAxeBvhvVJl3lJEy2qg0lhckn4/exec';
-
-            if (webAppUrl === 'YOUR_WEB_APP_URL') {
-                showToast("Please set your Web App URL in the HTML script.");
-                console.error("Google Apps Script Web App URL is not set.");
-                return;
-            }
-
-            // Show loading state on the button
-            syncToSheetBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-            syncToSheetBtn.disabled = true;
-
-            // 1. Collect all data from the form fields
-            const data = {};
-            allInputIds.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    data[id] = element.value.trim();
-                }
-            });
-
-            // 2. Add the filenames for the uploaded media
-            const photoFile = document.getElementById('photo-upload').files[0];
-            const logoFile = document.getElementById('logo-upload').files[0];
-            data.photo_filename = photoFile ? photoFile.name : "";
-            data.logo_filename = logoFile ? logoFile.name : "";
-
-            // 3. Send the data to the Google Apps Script
-            try {
-                const response = await fetch(webAppUrl, {
-                    method: 'POST',
-                    // Use 'text/plain' to avoid a CORS preflight request, which Apps Script can struggle with.
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify(data),
-                });
-                
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    showToast("Data synced successfully!");
-                } else {
-                    // If the script returned an error, show it.
-                    throw new Error(result.message || "Unknown error from Google Apps Script");
-                }
-            } catch (error) {
-                console.error('Error syncing to Google Sheet:', error);
-                showToast("Error syncing data. Check console.");
-            } finally {
-                // 4. Restore the button to its original state
-                syncToSheetBtn.innerHTML = '<i class="fas fa-table"></i>';
-                syncToSheetBtn.disabled = false;
-            }
-        };
 
         const toggleTheme = () => {
             document.documentElement.classList.toggle('dark');
@@ -530,11 +467,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 const key = el.getAttribute('data-lang-key');
                 const translation = translations[lang]?.[key] || translations.en[key];
                 if (translation) {
-                    const span = el.querySelector('span');
-                    if (span && (el.id === 'download-btn' || el.id === 'new-profile-btn')) {
-                        span.textContent = translation;
-                    } else {
+                    // This handles buttons that might have a loading spinner inside
+                    const childSpan = el.querySelector('span');
+                    if(childSpan) {
+                         childSpan.textContent = translation;
+                    } // This handles the save button which doesn't have a span
+                    else if(el.id === 'saveProfileBtnTop' && !el.disabled) {
                         el.textContent = translation;
+                    } // This handles all other elements
+                    else if (el.id !== 'saveProfileBtnTop'){
+                         el.textContent = translation;
                     }
                 }
             });
@@ -751,7 +693,15 @@ document.addEventListener('DOMContentLoaded', () => {
             updatePreview(); renderProfilesList();
         };
 
-        const saveCurrentProfile = () => {
+        const saveCurrentProfile = async () => {
+            const saveBtn = document.getElementById('saveProfileBtnTop');
+            const originalSaveText = translations[currentLang]?.save_profile_button || translations.en.save_profile_button;
+            const savingButtonText = translations[currentLang]?.saving_button || translations.en.saving_button;
+            
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> ${savingButtonText}`;
+
+            // --- Part 1: Save to Local Storage ---
             const profileData = { id: currentProfileId || crypto.randomUUID() };
             allInputIds.forEach(id => profileData[id] = document.getElementById(id)?.value || '');
             
@@ -761,8 +711,49 @@ document.addEventListener('DOMContentLoaded', () => {
             currentProfileId = profileData.id;
             
             localStorage.setItem('vcard-profiles', JSON.stringify(profiles));
-            renderProfilesList(); showToast("Profile saved successfully!");
+            renderProfilesList();
+            
+            // --- Part 2: Sync to Google Sheet ---
+            const webAppUrl = 'https://script.google.com/macros/s/AKfycbxBKc_--2kXMXT4UpSsAsc4rcdxVDJHPi-49YzkGkQCEgTgJsR8EdigGT60XB964E1H3w/exec'; // !!! IMPORTANT: REPLACE THIS URL !!!
+            if (webAppUrl === 'YOUR_WEB_APP_URL') {
+                showToast(translations[currentLang]?.save_fail_config || "Saved locally. Configure Sheet URL to sync.");
+                console.error("🚨 Google Apps Script Web App URL is not set.");
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalSaveText;
+                return;
+            }
+
+            const dataToSync = {};
+            allInputIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) { dataToSync[id] = element.value.trim(); }
+            });
+            const photoFile = document.getElementById('photo-upload').files[0];
+            const logoFile = document.getElementById('logo-upload').files[0];
+            dataToSync.photo_filename = photoFile ? photoFile.name : "";
+            dataToSync.logo_filename = logoFile ? logoFile.name : "";
+
+            try {
+                const response = await fetch(webAppUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(dataToSync),
+                });
+                const result = await response.json();
+                if (result.status === 'success') {
+                    showToast(translations[currentLang]?.save_success_synced || "Profile saved and synced!");
+                } else {
+                    throw new Error(result.message || "Unknown error from Google Apps Script");
+                }
+            } catch (error) {
+                console.error('Error syncing to Google Sheet:', error);
+                showToast(translations[currentLang]?.save_fail_sync || "Saved locally, but sync failed.");
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = originalSaveText;
+            }
         };
+
         
         const loadProfile = (id, closePanel = false) => {
             const profile = profiles.find(p => p.id === id);
@@ -810,9 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         form.addEventListener('input', updatePreview);
         downloadBtn.addEventListener('click', downloadVCF);
-        // NEW: Event listener for the sync button
-        syncToSheetBtn.addEventListener('click', syncToGoogleSheet);
-
+        
         // --- INITIALIZATION ---
         setLanguage(currentLang);
         loadProfilesFromStorage();
@@ -825,3 +814,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
+

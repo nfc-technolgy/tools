@@ -1,0 +1,893 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Favicon -->
+    <link rel="icon" href="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png">
+
+    <style>
+        :root {
+            --primary-color: #967e2d;
+            --primary-color-hover: #826c22; /* Darker gold for hover */
+            --background-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --input-border: #d1d5db;
+            --input-bg: #fff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        html.dark {
+            --primary-color: #967e2d;
+            --primary-color-hover: #826c22; /* Consistent hover color */
+            --background-color: #111111;
+            --card-bg: rgba(46, 46, 46, 0.5); 
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --input-bg: #1f2937;
+            --input-border: #525252; 
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--background-color); 
+            color: var(--text-primary); 
+            padding-top: 170px; 
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+
+        .top-menu-bar {
+            position: fixed;
+            top: 3rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 2rem);
+            max-width: 1200px;
+            z-index: 1100;
+            background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            border-radius: 12px;
+            padding: 0 1rem;
+        }
+        .top-menu-content { height: 80px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        .top-menu-actions { display: flex; align-items: center; gap: 0.5rem; }
+        
+        .fab {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            border: 1px solid var(--input-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .fab:hover { background-color: var(--input-border); transform: scale(1.1); }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background-color: var(--primary-color-hover); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .modal-hidden { display: none; }
+        
+        /* Dragging styles */
+        .dragging { opacity: 0.5; background-color: #967e2d !important; }
+        .drag-over-indicator {
+            height: 4px;
+            background-color: #967e2d;
+            margin: 2px 0;
+            border-radius: 2px;
+        }
+    </style>
+</head>
+<body class="transition-colors duration-300">
+
+    <!-- Top Bar Menu -->
+    <header class="top-menu-bar">
+        <div class="top-menu-content">
+            <div class="logo-container">
+                <img src="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png" alt="Logo" class="h-8 w-8 rounded-md object-cover">
+                <span class="font-bold text-xl">Profile Dashboard</span>
+            </div>
+            <div class="top-menu-actions">
+                <button id="home-btn" title="Homepage" class="fab">
+                    <i class="fas fa-home"></i>
+                </button>
+                <button id="settings-btn" title="Settings" class="fab">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button id="theme-toggle-btn" title="Toggle Theme" class="fab">
+                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-moon hidden"></i>
+                </button>
+                 <button id="save-changes-btn" class="btn-primary ml-2 hidden">
+                    <i class="fas fa-save mr-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Homepage: Grid of User Profiles -->
+        <div id="page-home" class="page active">
+            <h1 class="text-3xl font-bold mb-4 text-center">User Profiles</h1>
+            <div class="max-w-xl mx-auto mb-6">
+                <div class="relative">
+                     <input type="search" id="search-bar" placeholder="Search by name, title, or organization..." class="w-full p-3 pl-10 rounded-lg border bg-[var(--input-bg)] border-[var(--input-border)] focus:ring-2 focus:ring-[var(--primary-color)] focus:border-[var(--primary-color)] transition-shadow">
+                     <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-secondary)]"></i>
+                </div>
+            </div>
+            <div class="max-w-[1200px] mx-auto">
+                 <div id="user-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- User cards will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Page -->
+        <div id="page-editor" class="page">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Left Column: Form -->
+                <div class="flex-1 h-[calc(100vh-170px)] overflow-y-auto custom-scrollbar pr-4">
+                    <div id="profile-editor-display" class="space-y-6">
+                        <!-- Data display and editable fields will be dynamically generated here -->
+                    </div>
+                </div>
+                <!-- Right Column: Preview -->
+                <div class="lg:w-[400px] lg:flex-shrink-0">
+                    <div class="sticky top-28"> <!-- Adjusted top position for sticky preview -->
+                         <h2 class="text-2xl font-bold mb-4 text-[var(--text-primary)]">Preview</h2>
+                         <div class="w-full max-w-[375px] mx-auto bg-white dark:bg-gray-800 rounded-[40px] h-[750px] p-4 shadow-2xl border-8 border-gray-800 dark:border-gray-900 overflow-hidden">
+                            <div class="h-full w-full overflow-y-auto custom-scrollbar mobile-preview-content bg-gray-50 dark:bg-gray-700">
+                                <!-- Mobile Preview Content -->
+                                <div id="preview-header" class="relative h-48 bg-black bg-cover bg-center">
+                                    <img id="preview-profile-picture" src="https://placehold.co/100x100/e2e8f0/64748b?text=PIC" class="w-24 h-24 rounded-full absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 border-4 border-white object-cover">
+                                </div>
+                                <div class="text-center pt-16 pb-6 px-4">
+                                    <h3 id="preview-name" class="text-xl font-bold text-gray-800 dark:text-gray-100">Your Name</h3>
+                                    <p id="preview-title-org" class="text-sm text-gray-500 dark:text-gray-400">Title at Organization</p>
+                                </div>
+                                <div id="preview-social-icons" class="flex justify-center flex-wrap gap-4 px-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                                    <!-- Social Icons will be injected here -->
+                                </div>
+                                <div id="preview-buttons" class="px-4 py-4 space-y-3">
+                                   <a href="#" id="download-vcf-btn" class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center text-center hidden"><i class="fas fa-download mr-2"></i>Download Contact</a>
+                                    <!-- Custom Buttons will be injected here -->
+                                </div>
+                                <div id="preview-map-container" class="mt-4 hidden px-4">
+                                    <iframe id="preview-map" width="100%" height="250" style="border:0; border-radius: 12px;" allowfullscreen="" loading="lazy"></iframe>
+                                </div>
+                                <div id="preview-footer-container" class="relative mt-6 pt-16 pb-4 text-center">
+                                    <img id="preview-footer-logo" src="https://placehold.co/70x70/e2e8f0/64748b?text=LOGO" class="w-16 h-16 absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Powered with ⭐️ by NFC Technology</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="page-settings" class="page">
+            <h1 class="text-3xl font-bold mb-6">Settings</h1>
+            <div class="max-w-xl mx-auto bg-[var(--card-bg)] p-6 rounded-lg shadow">
+                <div class="space-y-4">
+                    <div>
+                        <label for="script-url" class="block text-sm font-medium text-[var(--text-secondary)]">Google Apps Script URL</label>
+                        <input type="url" id="script-url" placeholder="Enter your Web App URL" class="mt-1 block w-full rounded-md border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                    </div>
+                     <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
+                         <p class="text-sm">After saving, the app will reload all profiles from your Google Sheet. You must re-deploy your script as a Web App to get a URL.</p>
+                    </div>
+                    <div class="text-right">
+                        <button id="save-settings-btn" class="btn-primary">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public Profile View Page -->
+        <div id="page-public-view" class="page">
+            <!-- Public profile content will be dynamically generated here -->
+        </div>
+
+        <!-- Button Editor Modal -->
+        <div id="button-modal" class="modal-hidden fixed inset-0 bg-black/60 z-50 items-center justify-center">
+            <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-xl w-full max-w-md m-4">
+                <h3 id="modal-title" class="text-lg font-bold mb-4">Edit Button</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="modal-button-label" class="block text-sm font-medium text-[var(--text-secondary)]">Button Text</label>
+                        <input type="text" id="modal-button-label" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="modal-button-url" class="block text-sm font-medium text-[var(--text-secondary)]">Button URL</label>
+                        <input type="url" id="modal-button-url" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="modal-cancel-btn" class="bg-gray-200 dark:bg-gray-600 px-4 py-2 rounded-md text-sm font-medium">Cancel</button>
+                    <button id="modal-save-btn" class="btn-primary px-4 py-2 text-sm font-medium">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300 z-50">
+            <p id="toast-message">Message</p>
+        </div>
+    </main>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- STATE & CONFIG ---
+        let scriptUrl = localStorage.getItem('profileAppScriptUrl') || '';
+        let allUsers = [];
+        let currentEditingUser = null;
+        let editingButtonIndex = null; // To track which button is being edited
+        let draggedButtonIndex = null;
+
+        // --- DOM ELEMENTS ---
+        const pages = document.querySelectorAll('.page');
+        const homeBtn = document.getElementById('home-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const userGrid = document.getElementById('user-grid');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const scriptUrlInput = document.getElementById('script-url');
+        const editorDisplay = document.getElementById('profile-editor-display');
+        const saveChangesBtn = document.getElementById('save-changes-btn');
+        const buttonModal = document.getElementById('button-modal');
+        const searchBar = document.getElementById('search-bar');
+
+        // --- TOAST NOTIFICATION ---
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        function showToast(message, isError = false) {
+            toastMessage.textContent = message;
+            toast.className = toast.className.replace(/bg-red-600|bg-gray-900/g, '');
+            toast.classList.add(isError ? 'bg-red-600' : 'bg-gray-900');
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, 3000);
+        }
+
+        // --- THEME ---
+        function applyTheme(isDark) {
+            const sunIcon = themeToggleBtn.querySelector('.fa-sun');
+            const moonIcon = themeToggleBtn.querySelector('.fa-moon');
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = !document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            applyTheme(isDark);
+        });
+        
+        // --- ROUTING ---
+        function showPage(pageId) {
+            pages.forEach(page => page.classList.toggle('active', page.id === pageId));
+            saveChangesBtn.classList.toggle('hidden', pageId !== 'page-editor');
+        }
+
+        function handleRouting() {
+            const hash = window.location.hash.substring(1);
+            if (!scriptUrl) {
+                showPage('page-settings');
+                 userGrid.innerHTML = `<div class="col-span-full text-center p-8 bg-[var(--card-bg)] rounded-lg shadow">
+                     <h2 class="text-2xl font-bold mb-2">Welcome!</h2>
+                     <p class="text-[var(--text-secondary)] mb-4">Please set your Google Apps Script URL in the settings to get started.</p>
+                     <button id="go-to-settings-btn" class="btn-primary">Go to Settings</button>
+                 </div>`;
+                document.getElementById('go-to-settings-btn').addEventListener('click', () => window.location.hash = 'view=settings');
+                return;
+            }
+
+            if (hash.startsWith('user=')) {
+                loadPublicProfile(hash.substring(5));
+            } else if (hash.startsWith('edit=')) {
+                loadEditorForUser(hash.substring(5));
+            } else if (hash === 'view=settings') {
+                scriptUrlInput.value = scriptUrl;
+                showPage('page-settings');
+            } else {
+                loadHomepage();
+            }
+        }
+
+        homeBtn.addEventListener('click', () => window.location.hash = '');
+        settingsBtn.addEventListener('click', () => window.location.hash = 'view=settings');
+        window.addEventListener('hashchange', handleRouting);
+
+        // --- DATA FETCHING ---
+        async function fetchFromScript(action, params = {}) {
+            if (!scriptUrl) return null;
+            
+            const url = new URL(scriptUrl);
+            url.searchParams.append('action', action);
+            for (const key in params) {
+                url.searchParams.append(key, params[key]);
+            }
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                if (result.status === 'error') throw new Error(result.message);
+                return result.data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showToast(`Error: ${error.message}`, true);
+                return null;
+            }
+        }
+
+        async function postToScript(action, data) {
+             if (!scriptUrl) return null;
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, data })
+                });
+                return { status: 'success' };
+            } catch (error) {
+                console.error('POST error:', error);
+                showToast(`Save Error: ${error.message}`, true);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        // --- HOMEPAGE LOGIC ---
+        async function loadHomepage() {
+            showToast('Loading profiles...');
+            const fetchedUsers = await fetchFromScript('getAllUsers');
+            if(fetchedUsers) {
+                allUsers = fetchedUsers;
+                renderUserGrid(allUsers);
+            }
+            showPage('page-home');
+        }
+
+        function handleSearch() {
+            const searchTerm = searchBar.value.toLowerCase().trim();
+            if (!searchTerm) {
+                renderUserGrid(allUsers);
+                return;
+            }
+            const filteredUsers = allUsers.filter(user => {
+                const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ').toLowerCase();
+                const title = (user.title || '').toLowerCase();
+                const organization = (user.organization || '').toLowerCase();
+                return fullName.includes(searchTerm) || title.includes(searchTerm) || organization.includes(searchTerm);
+            });
+            renderUserGrid(filteredUsers);
+        }
+        searchBar.addEventListener('input', handleSearch);
+
+        function renderUserGrid(users) {
+            userGrid.innerHTML = '';
+            if (!users || users.length === 0) {
+                userGrid.innerHTML = '<p class="col-span-full text-center text-[var(--text-secondary)]">No profiles found.</p>';
+                return;
+            }
+            users.forEach(user => {
+                // Define business fields and calculate completion progress
+                const businessFields = [ 'organization', 'title', 'role', 'work_url', 'work_email', 'work_phone', 'work_fax', 'social_linkedin', 'location', 'profile_picture', 'header_image' ];
+                const totalFields = businessFields.length;
+                let completedFields = businessFields.filter(field => user[field]).length;
+                const progressPercentage = totalFields > 0 ? (completedFields / totalFields) * 100 : 0;
+
+                const publicUrl = `${window.location.origin}${window.location.pathname}#user=${user.uid}`;
+                const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+                
+                const card = document.createElement('div');
+                card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden flex flex-col transition-transform duration-300 hover:-translate-y-1 cursor-pointer';
+                
+                const headerStyle = user.header_image ? `background-image: url('${user.header_image}')` : `background-color: ${user.header_color || 'black'}`;
+                
+                card.innerHTML = `
+                    <div class="h-24 bg-cover bg-center" style="${headerStyle}"></div>
+                    <div class="p-4 flex flex-col items-center -mt-12">
+                        <img src="${user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC'}" class="w-20 h-20 rounded-full border-4 border-[var(--card-bg)] object-cover">
+                        <h3 class="mt-2 text-lg font-bold text-center">${fullName || 'Unnamed Profile'}</h3>
+                        <p class="text-sm text-[var(--text-secondary)] text-center mb-4 truncate w-full">${user.title || ''}${user.organization ? ' at ' + user.organization : ''}</p>
+                    </div>
+                    <div class="px-4 pb-4 space-y-4 flex-grow flex flex-col justify-end">
+                        <div>
+                            <div class="flex justify-between mb-1">
+                                <span class="text-xs font-medium text-[var(--text-secondary)]">Profile Completion</span>
+                                <span class="text-xs font-medium text-[var(--text-secondary)]">${Math.round(progressPercentage)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                                <div class="bg-[#967e2d] h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-medium text-[var(--text-secondary)]">Public URL</label>
+                            <div class="flex items-center gap-2 mt-1">
+                                <input type="text" value="${publicUrl}" class="text-xs bg-gray-100 dark:bg-gray-700 p-1 rounded-md w-full flex-grow cursor-default" readonly>
+                                <button title="Copy URL" class="copy-btn shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" data-url="${publicUrl}"><i class="fas fa-copy"></i></button>
+                                <a href="${publicUrl}" target="_blank" title="Open URL" class="external-link-btn shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><i class="fas fa-external-link-alt"></i></a>
+                            </div>
+                        </div>
+                    </div>`;
+
+                // Add event listeners programmatically to handle clicks and stop propagation
+                card.addEventListener('click', () => { window.location.hash = `edit=${user.uid}`; });
+                card.querySelector('.copy-btn').addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevents card click from firing
+                    copyToClipboard(e.currentTarget.dataset.url, 'Public URL');
+                });
+                card.querySelector('.external-link-btn').addEventListener('click', (e) => { e.stopPropagation(); }); // Prevents card click from firing
+
+                userGrid.appendChild(card);
+            });
+        }
+
+        // --- EDITOR LOGIC ---
+        async function loadEditorForUser(userId) {
+            const user = await fetchFromScript('getUser', { id: userId });
+            if (user) {
+                currentEditingUser = JSON.parse(JSON.stringify(user));
+                renderEditorDisplay(currentEditingUser);
+                updatePreview(currentEditingUser);
+                showPage('page-editor');
+            } else {
+                 showToast(`Could not load user with ID: ${userId}`, true);
+                 window.location.hash = '';
+            }
+        }
+
+        function renderEditorDisplay(user) {
+            editorDisplay.innerHTML = '';
+
+            const createDisplayField = (label, value) => {
+                if (!value) return '';
+                return `<div class="relative">
+                    <p class="block text-sm font-medium text-[var(--text-secondary)]">${label}</p>
+                    <p class="mt-1 text-base text-[var(--text-primary)] pr-8">${value}</p>
+                    <button type="button" class="absolute inset-y-0 right-0 top-0 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" onclick="copyToClipboard('${value.replace(/'/g, "\\'")}', '${label}')">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>`;
+            };
+
+            const createEditableField = (label, id, value, type = 'url') => {
+                 return `<div class="relative">
+                    <label for="${id}" class="block text-sm font-medium text-[var(--text-secondary)]">${label}</label>
+                    <input type="${type}" id="${id}" name="${id}" value="${value || ''}" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2 pr-10">
+                </div>`;
+            };
+
+            const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+            const publicUrl = `${window.location.origin}${window.location.pathname}#user=${user.uid}`;
+
+            const userInfoHtml = `
+                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">User Info</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${createDisplayField('Full Name', fullName)}
+                        ${createDisplayField('Title', user.title)}
+                        ${createDisplayField('Organization', user.organization)}
+                        ${createDisplayField('Role', user.role)}
+                        ${createDisplayField('Work Email', user.work_email)}
+                        ${createDisplayField('Work Phone', user.work_phone)}
+                        ${createDisplayField('Public URL', publicUrl)}
+                        ${user.vcf_url ? createDisplayField('vCard URL', user.vcf_url) : ''}
+                    </div>
+                </div>`;
+            
+            const customizationHtml = `
+                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">Profile Customization</h3>
+                    <div class="space-y-4">
+                        ${createEditableField('Profile Picture URL', 'profile_picture', user.profile_picture)}
+                        ${createEditableField('Header Image URL', 'header_image', user.header_image)}
+                        ${createEditableField('Footer Logo URL', 'footer_logo', user.footer_logo)}
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--text-secondary)]">Primary Color</label>
+                            <input type="color" id="primary_color" name="primary_color" value="${user.primary_color || '#000000'}" class="mt-1 h-10 w-full rounded-md border-0 p-0 bg-transparent cursor-pointer">
+                        </div>
+                        <div>
+                           <label class="block text-sm font-medium text-[var(--text-secondary)]">Button Shape</label>
+                           <div class="mt-2 flex gap-4" id="button_shape_group">
+                               <label class="flex items-center gap-2"><input type="radio" name="button_shape" value="rounded-full" ${user.button_shape === 'rounded-full' ? 'checked' : ''}>Pill</label>
+                               <label class="flex items-center gap-2"><input type="radio" name="button_shape" value="rounded-lg" ${(!user.button_shape || user.button_shape === 'rounded-lg') ? 'checked' : ''}>Rounded</label>
+                               <label class="flex items-center gap-2"><input type="radio" name="button_shape" value="rounded-none" ${user.button_shape === 'rounded-none' ? 'checked' : ''}>Square</label>
+                           </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            editorDisplay.innerHTML = userInfoHtml + customizationHtml;
+            editorDisplay.addEventListener('input', handleFormChange);
+        }
+
+
+        function handleFormChange() {
+            if (!currentEditingUser) return;
+            const elements = editorDisplay.querySelectorAll('input, select');
+            elements.forEach(el => {
+                if (el.name) {
+                    if (el.type === 'radio') {
+                        if (el.checked) currentEditingUser[el.name] = el.value;
+                    } else {
+                        currentEditingUser[el.name] = el.value;
+                    }
+                }
+            });
+            updatePreview(currentEditingUser);
+        }
+
+        function updatePreview(user) {
+            document.getElementById('preview-name').textContent = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+            document.getElementById('preview-title-org').textContent = `${user.title || ''}${user.organization ? ' at ' + user.organization : ''}`;
+            const header = document.getElementById('preview-header');
+            header.style.backgroundColor = user.header_color || 'black';
+            header.style.backgroundImage = user.header_image ? `url('${user.header_image}')` : 'none';
+            document.getElementById('preview-profile-picture').src = user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC';
+            document.getElementById('preview-footer-logo').src = user.footer_logo || 'https://placehold.co/70x70/e2e8f0/64748b?text=LOGO';
+            document.getElementById('preview-footer-container').style.backgroundColor = user.primary_color || 'transparent';
+
+            const downloadBtn = document.getElementById('download-vcf-btn');
+            if (user.vcf_url && user.vcf_url.startsWith('http')) {
+                downloadBtn.href = user.vcf_url;
+                downloadBtn.target = '_blank';
+                downloadBtn.classList.remove('hidden');
+                downloadBtn.style.backgroundColor = user.primary_color || '#1f2937';
+            } else {
+                downloadBtn.classList.add('hidden');
+            }
+
+            const mapContainer = document.getElementById('preview-map-container');
+            if (user.location) {
+                mapContainer.classList.remove('hidden');
+                // IMPORTANT: Replace YOUR_API_KEY with your actual Google Maps Embed API key
+                document.getElementById('preview-map').src = `https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(user.location)}`;
+            } else {
+                mapContainer.classList.add('hidden');
+            }
+
+            const socialContainer = document.getElementById('preview-social-icons');
+            socialContainer.innerHTML = '';
+            // Define a comprehensive list of social fields
+            const socialFields = {
+                linkedin: { icon: 'fab fa-linkedin', base: 'https://linkedin.com/in/' },
+                twitter: { icon: 'fab fa-twitter', base: 'https://twitter.com/' },
+                facebook: { icon: 'fab fa-facebook', base: 'https://facebook.com/' },
+                instagram: { icon: 'fab fa-instagram', base: 'https://instagram.com/' },
+                whatsapp: { icon: 'fab fa-whatsapp', base: 'https://wa.me/' },
+                email: { icon: 'fas fa-envelope', base: 'mailto:' },
+                work_email: { icon: 'fas fa-briefcase', base: 'mailto:' },
+                work_url: { icon: 'fas fa-globe', base: '' },
+                github: { icon: 'fab fa-github', base: 'https://github.com/' },
+                youtube: { icon: 'fab fa-youtube', base: 'https://youtube.com/' },
+                telegram: { icon: 'fab fa-telegram', base: 'https://t.me/' }
+            };
+
+            Object.keys(socialFields).forEach(key => {
+                const fullKey = `social_${key}`;
+                const value = user[fullKey] || user[key];
+                if (value) {
+                    const { icon, base } = socialFields[key];
+                    let href = value;
+                    if (!value.startsWith('http') && !value.startsWith('mailto:')) {
+                        href = base + value.replace(/\D/g, key === 'whatsapp' ? '' : value);
+                    }
+                     socialContainer.innerHTML += `<a href="${href}" target="_blank" class="text-2xl text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><i class="${icon}"></i></a>`;
+                }
+            });
+
+            renderPreviewButtons(user);
+        }
+        
+        async function handleSaveChanges() {
+            saveChangesBtn.disabled = true;
+            saveChangesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            
+            const result = await postToScript('updateUser', currentEditingUser);
+
+            if (result && result.status === 'success') {
+                showToast('Profile saved successfully!');
+                const userIndex = allUsers.findIndex(u => u.uid === currentEditingUser.uid);
+                if (userIndex > -1) allUsers[userIndex] = { ...currentEditingUser };
+            } else {
+                showToast('Failed to save profile. See console for details.', true);
+            }
+
+            saveChangesBtn.disabled = false;
+            saveChangesBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+        }
+
+        saveChangesBtn.addEventListener('click', handleSaveChanges);
+
+        // --- PUBLIC PROFILE LOGIC ---
+        async function loadPublicProfile(userId) {
+            showPage('page-public-view'); // Show page first with a loading indicator
+            const publicPage = document.getElementById('page-public-view');
+            publicPage.innerHTML = `<p class="text-center text-lg">Loading Profile...</p>`;
+            
+            const user = await fetchFromScript('getUser', { id: userId });
+            
+            if(user) {
+                // Clone the preview structure for the public page
+                const previewNode = document.querySelector('.lg\\:w-\\[400px\\] .sticky').cloneNode(true);
+                publicPage.innerHTML = `<div class="max-w-[450px] mx-auto"></div>`;
+                publicPage.firstElementChild.appendChild(previewNode);
+                
+                // Remove editor-specific elements from the cloned public view
+                publicPage.querySelector('h2').remove(); // Remove "Preview" title
+                publicPage.querySelectorAll('.edit-btn, .delete-btn, #add-button-btn, .group').forEach(el => {
+                    el.classList.remove('group'); // remove hover effects
+                    if (el.tagName === 'BUTTON') el.remove(); // remove edit/delete buttons
+                });
+                
+                // Re-assign IDs to avoid conflicts and update content
+                const tempContainer = document.createElement('div');
+                tempContainer.appendChild(previewNode);
+                const newHtml = tempContainer.innerHTML.replace(/id="/g, 'id="pub-');
+                publicPage.firstElementChild.innerHTML = newHtml;
+
+                updatePublicPreview(user);
+            } else {
+                 publicPage.innerHTML = `<p class="text-center text-lg">Profile not found.</p>`;
+            }
+        }
+        
+        // A dedicated update function for the public page to avoid ID conflicts
+        function updatePublicPreview(user) {
+            document.getElementById('pub-preview-name').textContent = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+            document.getElementById('pub-preview-title-org').textContent = `${user.title || ''}${user.organization ? ' at ' + user.organization : ''}`;
+            const header = document.getElementById('pub-preview-header');
+            header.style.backgroundColor = user.header_color || 'black';
+            header.style.backgroundImage = user.header_image ? `url('${user.header_image}')` : 'none';
+            document.getElementById('pub-preview-profile-picture').src = user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC';
+            document.getElementById('pub-preview-footer-logo').src = user.footer_logo || 'https://placehold.co/70x70/e2e8f0/64748b?text=LOGO';
+            document.getElementById('pub-preview-footer-container').style.backgroundColor = user.primary_color || 'transparent';
+
+            const downloadBtn = document.getElementById('pub-download-vcf-btn');
+            if (user.vcf_url && user.vcf_url.startsWith('http')) {
+                downloadBtn.href = user.vcf_url;
+                downloadBtn.target = '_blank';
+                downloadBtn.classList.remove('hidden');
+                downloadBtn.style.backgroundColor = user.primary_color || '#1f2937';
+            } else {
+                downloadBtn.classList.add('hidden');
+            }
+
+            // ... Re-implement social and button rendering logic using 'pub-' prefixed IDs ...
+            const socialContainer = document.getElementById('pub-preview-social-icons');
+             socialContainer.innerHTML = document.getElementById('preview-social-icons').innerHTML; // Simple copy
+
+            const buttonsContainer = document.getElementById('pub-preview-buttons');
+            buttonsContainer.innerHTML = ''; // Clear
+            if(downloadBtn.href) buttonsContainer.appendChild(downloadBtn); // Add vcf if exists
+
+            (user.custom_buttons || []).forEach(button => {
+                buttonsContainer.innerHTML += `<a href="${button.url}" target="_blank" class="block w-full text-white font-semibold py-3 px-4 text-center ${user.button_shape || 'rounded-lg'}" style="background-color: ${user.primary_color || '#1f2937'}">${button.label}</a>`;
+            });
+            
+            const mapContainer = document.getElementById('pub-preview-map-container');
+            if (user.location) {
+                mapContainer.classList.remove('hidden');
+                document.getElementById('pub-preview-map').src = `https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(user.location)}`;
+            } else {
+                mapContainer.classList.add('hidden');
+            }
+        }
+
+
+        // --- MODAL & BUTTON LOGIC ---
+        function openButtonModal(index = null) {
+            editingButtonIndex = index;
+            const title = document.getElementById('modal-title');
+            const labelInput = document.getElementById('modal-button-label');
+            const urlInput = document.getElementById('modal-button-url');
+            
+            if (index !== null && currentEditingUser.custom_buttons[index]) {
+                const button = currentEditingUser.custom_buttons[index];
+                title.textContent = 'Edit Button';
+                labelInput.value = button.label;
+                urlInput.value = button.url;
+            } else {
+                title.textContent = 'Add New Button';
+                labelInput.value = '';
+                urlInput.value = '';
+            }
+            buttonModal.classList.remove('modal-hidden');
+            buttonModal.classList.add('flex');
+        }
+
+        function closeButtonModal() {
+            buttonModal.classList.add('modal-hidden');
+            buttonModal.classList.remove('flex');
+        }
+
+        document.getElementById('modal-save-btn').addEventListener('click', () => {
+            const label = document.getElementById('modal-button-label').value.trim();
+            const url = document.getElementById('modal-button-url').value.trim();
+            if (!label || !url) {
+                showToast('Both label and URL are required.', true);
+                return;
+            }
+            if (!currentEditingUser.custom_buttons) currentEditingUser.custom_buttons = [];
+
+            if (editingButtonIndex !== null) {
+                currentEditingUser.custom_buttons[editingButtonIndex] = { label, url };
+            } else {
+                currentEditingUser.custom_buttons.push({ label, url });
+            }
+            updatePreview(currentEditingUser);
+            closeButtonModal();
+        });
+        document.getElementById('modal-cancel-btn').addEventListener('click', closeButtonModal);
+
+        function deleteButton(index) {
+            // Using a custom modal for confirmation would be better, but confirm is simpler for now
+            if (window.confirm('Are you sure you want to delete this button?')) {
+                currentEditingUser.custom_buttons.splice(index, 1);
+                updatePreview(currentEditingUser);
+            }
+        }
+        
+        function renderPreviewButtons(user) {
+            const container = document.getElementById('preview-buttons');
+            // Remove old custom buttons and add button
+            container.querySelectorAll('.custom-preview-button, #add-button-btn').forEach(el => el.remove());
+            
+            const shapeClass = user.button_shape || 'rounded-lg';
+            const primaryColor = user.primary_color || '#1f2937';
+
+            (user.custom_buttons || []).forEach((button, index) => {
+                const btnEl = document.createElement('div');
+                btnEl.className = `custom-preview-button relative group text-white font-semibold p-3 text-center ${shapeClass}`;
+                btnEl.style.backgroundColor = primaryColor;
+                btnEl.draggable = true;
+                btnEl.dataset.index = index;
+                btnEl.innerHTML = `
+                    <span class="pointer-events-none">${button.label}</span>
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 ${shapeClass}">
+                        <button class="text-white text-lg edit-btn" title="Edit"><i class="fas fa-pencil-alt pointer-events-none"></i></button>
+                        <button class="text-white text-lg delete-btn" title="Delete"><i class="fas fa-trash pointer-events-none"></i></button>
+                    </div>`;
+                btnEl.querySelector('.edit-btn').addEventListener('click', () => openButtonModal(index));
+                btnEl.querySelector('.delete-btn').addEventListener('click', () => deleteButton(index));
+                container.appendChild(btnEl);
+            });
+            
+             // Add the "+" button
+            const addButton = document.createElement('button');
+            addButton.id = 'add-button-btn';
+            addButton.className = `w-full border-2 border-dashed border-gray-400 text-gray-400 font-semibold py-3 px-4 ${shapeClass} hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors`;
+            addButton.innerHTML = `<i class="fas fa-plus mr-2"></i>Add Button`;
+            addButton.addEventListener('click', () => openButtonModal());
+            container.appendChild(addButton);
+            
+            // Add drag listeners
+            container.querySelectorAll('.custom-preview-button').forEach(btn => {
+                btn.addEventListener('dragstart', e => {
+                    draggedButtonIndex = parseInt(e.target.dataset.index);
+                    e.target.classList.add('dragging');
+                });
+                btn.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+            });
+
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const currentIndicator = container.querySelector('.drag-over-indicator');
+                if (currentIndicator) currentIndicator.remove();
+                const indicator = document.createElement('div');
+                indicator.className = 'drag-over-indicator';
+                if (afterElement == null) {
+                    container.insertBefore(indicator, container.querySelector('#add-button-btn'));
+                } else {
+                    container.insertBefore(indicator, afterElement);
+                }
+            });
+
+            container.addEventListener('dragleave', () => {
+                 container.querySelector('.drag-over-indicator')?.remove();
+            });
+
+            container.addEventListener('drop', e => {
+                e.preventDefault();
+                container.querySelector('.drag-over-indicator')?.remove();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const toIndex = afterElement ? parseInt(afterElement.dataset.index) : (user.custom_buttons || []).length;
+                
+                const movedButton = currentEditingUser.custom_buttons.splice(draggedButtonIndex, 1)[0];
+                const adjustedToIndex = toIndex > draggedButtonIndex ? toIndex - 1 : toIndex;
+                currentEditingUser.custom_buttons.splice(adjustedToIndex, 0, movedButton);
+
+                updatePreview(currentEditingUser); // Re-render with new order
+                draggedButtonIndex = null;
+            });
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.custom-preview-button:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // --- SETTINGS LOGIC ---
+        saveSettingsBtn.addEventListener('click', () => {
+            const newUrl = scriptUrlInput.value.trim();
+            if (newUrl) {
+                localStorage.setItem('profileAppScriptUrl', newUrl);
+                scriptUrl = newUrl;
+                showToast('Settings saved!');
+                window.location.hash = '';
+                location.reload(); // Reload to re-initialize with the new script URL
+            } else {
+                showToast('URL cannot be empty.', true);
+            }
+        });
+        
+        // --- GLOBAL HELPER ---
+        window.copyToClipboard = (text, label) => {
+             navigator.clipboard.writeText(text).then(() => {
+                 showToast(`${label} copied to clipboard!`);
+            }, (err) => {
+                 showToast(`Failed to copy ${label}`, true);
+            });
+        }
+
+        // --- INITIALIZATION ---
+        const savedTheme = localStorage.getItem('theme');
+        applyTheme(savedTheme ? savedTheme === 'dark' : true);
+        handleRouting();
+
+    });
+    </script>
+</body>
+</html>

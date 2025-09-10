@@ -27,7 +27,7 @@
             --input-bg: #fff;
             --input-border: #e2e8f0;
             --border-color: #d1d5db;
-            --bg-tertiary: #94a3b8;
+            --bg-tertiary: rgba(46, 46, 46, 0.1);
             --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
         }
 
@@ -42,8 +42,8 @@
             --text-secondary-public: #9CA3AF; /* Lighter gray for dark mode public profile */
             --input-bg: #000000;
             --input-border: #525252;
-            --border-color: #4b5563;
-            --bg-tertiary: #475569;
+            --border-color: rgba(46, 46, 46, 0.5);
+            --bg-tertiary: rgba(46, 46, 46, 0.5);
         }
 
         /* --- General Styles --- */
@@ -60,8 +60,8 @@
 
         .custom-scrollbar::-webkit-scrollbar { width: 8px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-tertiary); }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
-        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #967e2d; border-radius: 4px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #967e2d; }
         
         #vcard-form input,
         #vcard-form textarea,
@@ -1622,4 +1622,3 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 </body>
 </html>
-

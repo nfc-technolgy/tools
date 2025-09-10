@@ -22,27 +22,17 @@
             --primary-color: #967e2d;
             --primary-color-hover: #525252;
             --background-color: #111111;
-            /* Change the card-bg from a solid color to a transparent one for glass effect */
-            --card-bg: rgba(46, 46, 46, 0.5); /* This is your original #2e2e2e at 50% opacity */
-            --text-color: #e2e8f0;
+            --card-bg: rgba(46, 46, 46, 0.5); 
             --text-primary: #f9fafb;
             --text-secondary: #d1d5db;
-            
-            /* UPDATED INPUT STYLES FOR DARK THEME */
-            --input-bg: #000000; /* Pure black background */
-            --input-border: #525252; /* A lighter gray for better contrast against black */
-            --border-color: #4b5563;
-            --bg-tertiary: #4b5563;
-
-            /* Glass Effect Properties */
-            --card-border: rgba(255, 255, 255, 0.1); /* Light, transparent border */
-            --backdrop-blur: blur(10px); /* The blur effect */
+            --input-bg: #000000;
+            --input-border: #525252; 
         }
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--background-color); 
             color: var(--text-primary); 
-            padding-top: 120px; /* Space for fixed header */
+            padding-top: 120px; 
         }
         .page { display: none; }
         .page.active { display: block; }
@@ -52,8 +42,7 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
         html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
 
-        /* Top Menu Bar Styles */
-       .top-menu-bar {
+        .top-menu-bar {
             position: fixed;
             top: 2rem;
             left: 50%;
@@ -67,7 +56,6 @@
             box-shadow: var(--shadow);
             border-radius: 12px;
             padding: 0 1rem;
-            transition: top 0.3s ease-in-out;
         }
         .top-menu-content { height: 80px; display: flex; align-items: center; justify-content: space-between; }
         .logo-container { display: flex; align-items: center; gap: 1rem; }
@@ -101,6 +89,17 @@
         }
         .btn-primary:hover { background-color: var(--primary-color-hover); }
         .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+        
+        .modal-hidden { display: none; }
+        
+        /* Dragging styles */
+        .dragging { opacity: 0.5; background-color: #3b82f6 !important; }
+        .drag-over-indicator {
+            height: 4px;
+            background-color: #3b82f6;
+            margin: 2px 0;
+            border-radius: 2px;
+        }
     </style>
 </head>
 <body class="transition-colors duration-300">
@@ -146,9 +145,9 @@
             <div class="flex flex-col lg:flex-row gap-8">
                 <!-- Left Column: Form -->
                 <div class="flex-1 h-[calc(100vh-170px)] overflow-y-auto custom-scrollbar pr-4">
-                    <form id="profile-editor-form" class="space-y-6">
-                        <!-- Form fields will be dynamically generated here -->
-                    </form>
+                    <div id="profile-editor-display" class="space-y-6">
+                        <!-- Data display and editable fields will be dynamically generated here -->
+                    </div>
                 </div>
                 <!-- Right Column: Preview -->
                 <div class="lg:w-[400px] lg:flex-shrink-0">
@@ -168,7 +167,7 @@
                                     <!-- Social Icons will be injected here -->
                                 </div>
                                 <div id="preview-buttons" class="px-4 py-4 space-y-3">
-                                   <button class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg"><i class="fas fa-download mr-2"></i>Download Contact</button>
+                                   <a href="#" id="download-vcf-btn" class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center text-center"><i class="fas fa-download mr-2"></i>Download Contact</a>
                                     <!-- Custom Buttons will be injected here -->
                                 </div>
                                  <div id="preview-map-container" class="mt-4 hidden">
@@ -203,14 +202,34 @@
 
         <!-- Public Profile View Page -->
         <div id="page-public-view" class="page">
-            <!-- Public profile content will be injected here -->
+            <!-- Public profile content will be dynamically generated here -->
+        </div>
+
+        <!-- Button Editor Modal -->
+        <div id="button-modal" class="modal-hidden fixed inset-0 bg-black/60 z-50 items-center justify-center">
+            <div class="bg-[var(--card-bg)] p-6 rounded-lg shadow-xl w-full max-w-md m-4">
+                <h3 id="modal-title" class="text-lg font-bold mb-4">Edit Button</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label for="modal-button-label" class="block text-sm font-medium text-[var(--text-secondary)]">Button Text</label>
+                        <input type="text" id="modal-button-label" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
+                    </div>
+                    <div>
+                        <label for="modal-button-url" class="block text-sm font-medium text-[var(--text-secondary)]">Button URL</label>
+                        <input type="url" id="modal-button-url" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end gap-3">
+                    <button id="modal-cancel-btn" class="bg-gray-200 dark:bg-gray-600 px-4 py-2 rounded-md text-sm font-medium">Cancel</button>
+                    <button id="modal-save-btn" class="btn-primary px-4 py-2 text-sm font-medium">Save</button>
+                </div>
+            </div>
         </div>
 
         <!-- Toast Notification -->
-        <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300">
+        <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300 z-50">
             <p id="toast-message">Message</p>
         </div>
-
     </main>
     
     <script>
@@ -219,6 +238,8 @@
         let scriptUrl = localStorage.getItem('profileAppScriptUrl') || '';
         let allUsers = [];
         let currentEditingUser = null;
+        let editingButtonIndex = null; // To track which button is being edited
+        let draggedButtonIndex = null;
 
         // --- DOM ELEMENTS ---
         const pages = document.querySelectorAll('.page');
@@ -228,8 +249,9 @@
         const userGrid = document.getElementById('user-grid');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
         const scriptUrlInput = document.getElementById('script-url');
-        const editorForm = document.getElementById('profile-editor-form');
+        const editorDisplay = document.getElementById('profile-editor-display');
         const saveChangesBtn = document.getElementById('save-changes-btn');
+        const buttonModal = document.getElementById('button-modal');
 
         // --- TOAST NOTIFICATION ---
         const toast = document.getElementById('toast');
@@ -267,25 +289,17 @@
         
         // --- ROUTING ---
         function showPage(pageId) {
-            pages.forEach(page => {
-                page.classList.toggle('active', page.id === pageId);
-            });
-            // Show/hide save button based on page
+            pages.forEach(page => page.classList.toggle('active', page.id === pageId));
             saveChangesBtn.classList.toggle('hidden', pageId !== 'page-editor');
         }
 
         function handleRouting() {
             const hash = window.location.hash.substring(1);
-            const params = new URLSearchParams(hash);
-            const view = params.get('view');
-            const editId = params.get('edit');
-            const publicId = params.get('user');
-
-            if (publicId) {
-                loadPublicProfile(publicId);
-            } else if (editId) {
-                loadEditorForUser(editId);
-            } else if (view === 'settings') {
+            if (hash.startsWith('user=')) {
+                loadPublicProfile(hash.substring(5));
+            } else if (hash.startsWith('edit=')) {
+                loadEditorForUser(hash.substring(5));
+            } else if (hash === 'view=settings') {
                 scriptUrlInput.value = scriptUrl;
                 showPage('page-settings');
             } else {
@@ -297,46 +311,50 @@
         settingsBtn.addEventListener('click', () => window.location.hash = 'view=settings');
         window.addEventListener('hashchange', handleRouting);
 
-
         // --- DATA FETCHING ---
         async function fetchFromScript(action, params = {}) {
             if (!scriptUrl) {
-                showToast('Please set your Google Apps Script URL in Settings.', true);
-                window.location.hash = 'view=settings';
-                return null;
+                return { status: 'error', message: 'Script URL not set' };
             }
             const url = new URL(scriptUrl);
             url.searchParams.append('action', action);
             for (const key in params) {
                 url.searchParams.append(key, params[key]);
             }
-
             try {
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 const result = await response.json();
                 if (result.status === 'error') throw new Error(result.message);
-                return result.data;
+                return { status: 'success', data: result.data };
             } catch (error) {
                 console.error('Fetch error:', error);
                 showToast(`Error: ${error.message}`, true);
-                return null;
+                return { status: 'error', message: error.message };
             }
         }
 
         async function postToScript(action, data) {
              if (!scriptUrl) {
                 showToast('Please set your Google Apps Script URL in Settings.', true);
-                return null;
+                return { status: 'error', message: 'Script URL not set' };
             }
             try {
+                // NOTE: Removing 'no-cors' mode allows for proper error handling, like seeing CORS
+                // errors in the console. Your Google Apps Script must be correctly deployed to 
+                // handle requests from this web app.
                 const response = await fetch(scriptUrl, {
                     method: 'POST',
-                    mode: 'no-cors', 
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action, data })
                 });
-                return { status: 'success' };
+
+                // This is an optimistic success response. A robust implementation would involve
+                // the Apps Script returning a JSON confirmation message.
+                if (response.ok || response.type === 'opaque') {
+                     return { status: 'success' };
+                }
+                throw new Error(`Server responded with status: ${response.status}`);
             } catch (error) {
                 console.error('POST error:', error);
                 showToast(`Save Error: ${error.message}`, true);
@@ -346,14 +364,31 @@
 
         // --- HOMEPAGE LOGIC ---
         async function loadHomepage() {
-            allUsers = await fetchFromScript('getAllUsers');
-            renderUserGrid(allUsers);
+            const result = await fetchFromScript('getAllUsers');
+            if (result.status === 'success') {
+                allUsers = result.data;
+                renderUserGrid(allUsers);
+            } else {
+                allUsers = []; // Clear any old data
+                if (result.message === 'Script URL not set') {
+                    userGrid.innerHTML = `
+                        <div class="col-span-full text-center text-[var(--text-secondary)] p-8 bg-[var(--card-bg)] rounded-lg shadow">
+                            <h2 class="text-2xl font-bold mb-4">Welcome!</h2>
+                            <p class="mb-6">To get started, please add your Google Apps Script Web App URL in the settings.</p>
+                            <button onclick="window.location.hash = 'view=settings'" class="btn-primary">Go to Settings</button>
+                        </div>
+                    `;
+                } else {
+                     userGrid.innerHTML = `<p class="col-span-full text-center text-[var(--text-secondary)]">Could not load profiles. ${result.message}</p>`;
+                }
+            }
             showPage('page-home');
         }
 
         function renderUserGrid(users) {
             userGrid.innerHTML = '';
             if (!users || users.length === 0) {
+                // This case is now mostly handled by loadHomepage, but kept as a fallback.
                 userGrid.innerHTML = '<p class="col-span-full text-center text-[var(--text-secondary)]">No profiles found in the spreadsheet.</p>';
                 return;
             }
@@ -361,149 +396,113 @@
                 const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
                 const card = document.createElement('div');
                 card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
-                card.dataset.userId = user.uid;
-
+                card.addEventListener('click', () => { window.location.hash = `edit=${user.uid}`; });
                 const headerStyle = user.header_image ? `background-image: url('${user.header_image}')` : `background-color: ${user.header_color || 'black'}`;
-                
                 card.innerHTML = `
                     <div class="h-24 bg-cover bg-center" style="${headerStyle}"></div>
                     <div class="p-4 flex flex-col items-center -mt-12">
                         <img src="${user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC'}" class="w-20 h-20 rounded-full border-4 border-[var(--card-bg)] object-cover">
                         <h3 class="mt-2 text-lg font-bold text-center">${fullName || 'Unnamed Profile'}</h3>
                         <p class="text-sm text-[var(--text-secondary)] text-center">${user.title || ''}${user.organization ? ' at ' + user.organization : ''}</p>
-                    </div>
-                `;
-                card.addEventListener('click', () => {
-                    window.location.hash = `edit=${user.uid}`;
-                });
+                    </div>`;
                 userGrid.appendChild(card);
             });
         }
 
-
         // --- EDITOR LOGIC ---
         async function loadEditorForUser(userId) {
-            currentEditingUser = await fetchFromScript('getUser', { id: userId });
-            if (currentEditingUser) {
-                renderEditorForm(currentEditingUser);
+            const result = await fetchFromScript('getUser', { id: userId });
+            if (result.status === 'success' && result.data) {
+                currentEditingUser = JSON.parse(JSON.stringify(result.data));
+                renderEditorDisplay(currentEditingUser);
                 updatePreview(currentEditingUser);
                 showPage('page-editor');
             } else {
                  showToast(`Could not load user with ID: ${userId}`, true);
-                 window.location.hash = ''; // Go home if user not found
+                 window.location.hash = '';
             }
         }
 
-        function renderEditorForm(user) {
-           editorForm.innerHTML = ''; // Clear previous form
-            const fields = [
-                { group: 'Name', id: 'prefix', label: 'Prefix' }, { group: 'Name', id: 'firstname', label: 'First Name' },
-                { group: 'Name', id: 'middlename', label: 'Middle Name' }, { group: 'Name', id: 'lastname', label: 'Last Name' },
-                { group: 'Name', id: 'suffix', label: 'Suffix' }, { group: 'Name', id: 'nickname', label: 'Nickname' },
-                { group: 'Work', id: 'organization', label: 'Organization' }, { group: 'Work', id: 'title', label: 'Title' },
-                { group: 'Work', id: 'work_url', label: 'Work URL', type: 'url' },
-                { group: 'Appearance', id: 'header_color', label: 'Header Color', type: 'color'}, { group: 'Appearance', id: 'header_image', label: 'Header Image URL', type: 'url'},
-                { group: 'Appearance', id: 'profile_picture', label: 'Profile Picture URL', type: 'url'}, { group: 'Appearance', id: 'primary_color', label: 'Primary Color', type: 'color'},
-                { group: 'Appearance', id: 'footer_logo', label: 'Footer Logo URL', type: 'url'},
-                { group: 'Contact', id: 'email', label: 'Email', type: 'email' }, { group: 'Contact', id: 'work_email', label: 'Work Email', type: 'email' },
-                { group: 'Contact', id: 'cell_phone', label: 'Cell Phone', type: 'tel' }, { group: 'Contact', id: 'location', label: 'Location (for Map)'},
-                // Social Links
-                { group: 'Social', id: 'social_linkedin', label: 'LinkedIn', type: 'url' }, { group: 'Social', id: 'social_twitter', label: 'Twitter', type: 'url' },
-                { group: 'Social', id: 'social_facebook', label: 'Facebook', type: 'url' }, { group: 'Social', id: 'social_instagram', label: 'Instagram', type: 'url' },
-                { group: 'Social', id: 'social_whatsapp', label: 'WhatsApp (Phone #)', type: 'tel' },
-            ];
+        function renderEditorDisplay(user) {
+           editorDisplay.innerHTML = '';
+           
+           const createDisplayField = (label, value) => {
+               if (!value) return '';
+               return `<div>
+                   <p class="block text-sm font-medium text-[var(--text-secondary)]">${label}</p>
+                   <p class="mt-1 text-base text-[var(--text-primary)]">${value}</p>
+               </div>`;
+           };
 
-            const groupedFields = fields.reduce((acc, field) => {
-                if (!acc[field.group]) acc[field.group] = [];
-                acc[field.group].push(field);
-                return acc;
-            }, {});
+           const createEditableField = (label, id, value, type = 'url') => {
+               return `<div class="relative">
+                   <label for="${id}" class="block text-sm font-medium text-[var(--text-secondary)]">${label}</label>
+                   <input type="${type}" id="${id}" name="${id}" value="${value}" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2 pr-10">
+                   <button type="button" class="absolute inset-y-0 right-0 top-6 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" onclick="copyToClipboard(document.getElementById('${id}').value, '${label}')">
+                       <i class="fas fa-copy"></i>
+                   </button>
+               </div>`;
+           };
 
-            for (const groupName in groupedFields) {
-                const groupWrapper = document.createElement('div');
-                groupWrapper.className = 'p-6 bg-[var(--card-bg)] rounded-lg shadow-sm';
-                groupWrapper.innerHTML = `<h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">${groupName}</h3>`;
-                
-                const grid = document.createElement('div');
-                grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
-                
-                groupedFields[groupName].forEach(field => {
-                    const value = user[field.id] || '';
-                    const inputWrapper = document.createElement('div');
-                    if (field.type === 'color') {
-                         inputWrapper.innerHTML = `
-                            <label for="${field.id}" class="block text-sm font-medium text-[var(--text-secondary)]">${field.label}</label>
-                            <input type="${field.type || 'text'}" id="${field.id}" name="${field.id}" value="${value}" class="mt-1 h-10 block w-full rounded-md border-0 p-0 bg-transparent cursor-pointer">`;
-                    } else {
-                         inputWrapper.innerHTML = `
-                            <label for="${field.id}" class="block text-sm font-medium text-[var(--text-secondary)]">${field.label}</label>
-                            <input type="${field.type || 'text'}" id="${field.id}" name="${field.id}" value="${value}" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)] p-2">`;
-                    }
-                    grid.appendChild(inputWrapper);
-                });
-                groupWrapper.appendChild(grid);
-                editorForm.appendChild(groupWrapper);
-            }
-            // Add custom buttons section
-            renderCustomButtonsEditor(user.custom_buttons || []);
-            editorForm.addEventListener('input', () => {
-                const formData = new FormData(editorForm);
-                const updatedUser = { ...currentEditingUser };
-                 for (const [key, value] of formData.entries()) {
-                    updatedUser[key] = value;
-                }
-                updatedUser.custom_buttons = getCustomButtonsFromForm();
-                updatePreview(updatedUser);
-            });
-        }
-        
-        function renderCustomButtonsEditor(buttons) {
-            const container = document.createElement('div');
-            container.id = 'custom-buttons-editor';
-            container.className = 'p-6 bg-[var(--card-bg)] rounded-lg shadow-sm';
-            container.innerHTML = `<h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">Custom Buttons</h3>`;
-            const buttonList = document.createElement('div');
-            buttonList.id = 'custom-buttons-list';
-            buttonList.className = 'space-y-4';
-            container.appendChild(buttonList);
+            let nameHtml = `
+                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">User Info</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        ${createDisplayField('Full Name', [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' '))}
+                        ${createDisplayField('Title', user.title)}
+                        ${createDisplayField('Organization', user.organization)}
+                        ${createDisplayField('Role', user.role)}
+                    </div>
+                </div>`;
             
-            const addButton = document.createElement('button');
-            addButton.type = 'button';
-            addButton.textContent = 'Add Custom Button';
-            addButton.className = 'mt-4 text-sm bg-gray-200 dark:bg-gray-600 py-2 px-3 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500';
-            addButton.addEventListener('click', () => addCustomButtonField());
+            const publicUrl = `${window.location.origin}${window.location.pathname}#user=${user.uid}`;
+            let settingsHtml = `
+                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Settings & Links</h3>
+                    <div class="space-y-4">
+                         <div class="relative">
+                           <label class="block text-sm font-medium text-[var(--text-secondary)]">Public Profile URL</label>
+                           <input type="text" value="${publicUrl}" class="mt-1 block w-full rounded-md border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2 pr-10" readonly>
+                           <button type="button" class="absolute inset-y-0 right-0 top-6 flex items-center pr-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]" onclick="copyToClipboard('${publicUrl}', 'Public URL')">
+                               <i class="fas fa-copy"></i>
+                           </button>
+                       </div>
+                        ${createEditableField('Profile Picture URL', 'profile_picture', user.profile_picture || '')}
+                        ${createEditableField('Header Image URL', 'header_image', user.header_image || '')}
+                        ${createEditableField('Footer Logo URL', 'footer_logo', user.footer_logo || '')}
+                        <div>
+                            <label class="block text-sm font-medium text-[var(--text-secondary)]">Primary Color</label>
+                            <input type="color" id="primary_color" name="primary_color" value="${user.primary_color || '#000000'}" class="mt-1 h-10 w-full rounded-md border-0 p-0 bg-transparent cursor-pointer">
+                        </div>
+                        <div>
+                           <label class="block text-sm font-medium text-[var(--text-secondary)]">Button Shape</label>
+                           <div class="mt-2 flex gap-4" id="button_shape_group">
+                               <label class="flex items-center gap-2"><input type="radio" name="button_shape" value="rounded-lg" ${(!user.button_shape || user.button_shape === 'rounded-lg') ? 'checked' : ''}>Pill</label>
+                               <label class="flex items-center gap-2"><input type="radio" name="button_shape" value="rounded-md" ${user.button_shape === 'rounded-md' ? 'checked' : ''}>Rounded</label>
+                               <label class="flex items-center gap-2"><input type="radio" name="button_shape" value="rounded-none" ${user.button_shape === 'rounded-none' ? 'checked' : ''}>Square</label>
+                           </div>
+                        </div>
+                    </div>
+                </div>`;
 
-            container.appendChild(addButton);
-            editorForm.appendChild(container);
-            buttons.forEach(btn => addCustomButtonField(btn.label, btn.url));
+            editorDisplay.innerHTML = nameHtml + settingsHtml;
+            editorDisplay.addEventListener('input', handleFormChange);
         }
 
-        function addCustomButtonField(label = '', url = '') {
-            const list = document.getElementById('custom-buttons-list');
-            const fieldWrapper = document.createElement('div');
-            fieldWrapper.className = 'flex items-center gap-2 custom-button-field';
-            fieldWrapper.innerHTML = `
-                <input type="text" name="custom_button_label" placeholder="Button Label" value="${label}" class="flex-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
-                <input type="url" name="custom_button_url" placeholder="Button URL" value="${url}" class="flex-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
-                <button type="button" class="text-red-500 hover:text-red-700 p-2 remove-button"><i class="fas fa-trash"></i></button>
-            `;
-            fieldWrapper.querySelector('.remove-button').addEventListener('click', () => fieldWrapper.remove());
-            list.appendChild(fieldWrapper);
-        }
-
-        function getCustomButtonsFromForm() {
-            const buttons = [];
-            const fields = editorForm.querySelectorAll('.custom-button-field');
-            fields.forEach(field => {
-                const label = field.querySelector('input[name="custom_button_label"]').value.trim();
-                const url = field.querySelector('input[name="custom_button_url"]').value.trim();
-                if (label && url) {
-                    buttons.push({ label, url });
+        function handleFormChange() {
+            if (!currentEditingUser) return;
+            const elements = editorDisplay.querySelectorAll('input, select');
+            elements.forEach(el => {
+                if (el.name) {
+                    if (el.type === 'radio') {
+                        if (el.checked) currentEditingUser[el.name] = el.value;
+                    } else {
+                        currentEditingUser[el.name] = el.value;
+                    }
                 }
             });
-            return buttons;
+            updatePreview(currentEditingUser);
         }
-
 
         function updatePreview(user) {
             document.getElementById('preview-name').textContent = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
@@ -531,59 +530,182 @@
                 const fullKey = `social_${key}`;
                 const value = user[fullKey] || user[key];
                  if (value) {
-                    let href = value;
+                    let href = value.startsWith('http') || value.startsWith('mailto:') ? value : `https://${value}`;
                     if (key === 'whatsapp') href = `https://wa.me/${value.replace(/\D/g, '')}`;
                     if (key === 'email' || key === 'work_email') href = `mailto:${value}`;
                     socialContainer.innerHTML += `<a href="${href}" target="_blank" class="text-2xl text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><i class="${iconMap[key]}"></i></a>`;
                 }
             });
 
-            const buttonsContainer = document.getElementById('preview-buttons');
-            buttonsContainer.querySelectorAll('.custom-preview-button').forEach(btn => btn.remove());
-            (user.custom_buttons || []).forEach(btn => {
-                buttonsContainer.innerHTML += `<a href="${btn.url}" target="_blank" class="custom-preview-button block w-full bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg text-center">${btn.label}</a>`;
-            });
+            renderPreviewButtons(user);
         }
         
         async function handleSaveChanges() {
-            const saveBtn = document.getElementById('save-changes-btn');
-            saveBtn.disabled = true;
-            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            saveChangesBtn.disabled = true;
+            saveChangesBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
             
-            const formData = new FormData(editorForm);
-            const updatedUserData = { uid: currentEditingUser.uid };
-
-            for (let [key, value] of formData.entries()) {
-                updatedUserData[key] = value;
-            }
-            updatedUserData.custom_buttons = getCustomButtonsFromForm();
-
-            const result = await postToScript('updateUser', updatedUserData);
+            const result = await postToScript('updateUser', currentEditingUser);
 
             if (result && result.status === 'success') {
                 showToast('Profile saved successfully!');
-                const userIndex = allUsers.findIndex(u => u.uid === updatedUserData.uid);
-                if (userIndex > -1) {
-                    allUsers[userIndex] = { ...allUsers[userIndex], ...updatedUserData };
-                }
+                const userIndex = allUsers.findIndex(u => u.uid === currentEditingUser.uid);
+                if (userIndex > -1) allUsers[userIndex] = { ...currentEditingUser };
             } else {
                 showToast('Failed to save profile. See console for details.', true);
             }
 
-            saveBtn.disabled = false;
-            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+            saveChangesBtn.disabled = false;
+            saveChangesBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
         }
 
         saveChangesBtn.addEventListener('click', handleSaveChanges);
 
         // --- PUBLIC PROFILE LOGIC ---
-        function loadPublicProfile(userId) {
-            // Placeholder
+        async function loadPublicProfile(userId) {
+            const result = await fetchFromScript('getUser', { id: userId });
             const publicPage = document.getElementById('page-public-view');
-            publicPage.innerHTML = `<h1 class="text-3xl font-bold">Public Profile for User ${userId}</h1><p>This page would display the user's public profile card.</p>`;
+            if(result.status === 'success' && result.data) {
+                const user = result.data;
+                // Reuse preview logic to build public page
+                publicPage.innerHTML = `<div class="max-w-[450px] mx-auto">${document.querySelector('.lg\\:w-\\[400px\\] .sticky').innerHTML}</div>`;
+                // Disable editor interactions for public view
+                publicPage.querySelector('h2').textContent = 'Public Profile';
+                publicPage.querySelectorAll('.edit-btn, .delete-btn, #add-button-btn').forEach(el => el.remove());
+                 updatePreview(user); // Populate the cloned structure with data
+            } else {
+                 publicPage.innerHTML = `<p class="text-center text-lg">Profile not found.</p>`;
+            }
             showPage('page-public-view');
         }
 
+        // --- MODAL & BUTTON LOGIC ---
+        function openButtonModal(index = null) {
+            editingButtonIndex = index;
+            const title = document.getElementById('modal-title');
+            const labelInput = document.getElementById('modal-button-label');
+            const urlInput = document.getElementById('modal-button-url');
+            
+            if (index !== null && currentEditingUser.custom_buttons[index]) {
+                const button = currentEditingUser.custom_buttons[index];
+                title.textContent = 'Edit Button';
+                labelInput.value = button.label;
+                urlInput.value = button.url;
+            } else {
+                title.textContent = 'Add New Button';
+                labelInput.value = '';
+                urlInput.value = '';
+            }
+            buttonModal.classList.remove('modal-hidden');
+            buttonModal.classList.add('flex'); // Make it visible and a flex container
+        }
+
+        function closeButtonModal() {
+            buttonModal.classList.add('modal-hidden');
+            buttonModal.classList.remove('flex'); // Hide it and remove flex
+        }
+
+        document.getElementById('modal-save-btn').addEventListener('click', () => {
+            const label = document.getElementById('modal-button-label').value.trim();
+            const url = document.getElementById('modal-button-url').value.trim();
+            if (!label || !url) {
+                showToast('Both label and URL are required.', true);
+                return;
+            }
+            if (!currentEditingUser.custom_buttons) currentEditingUser.custom_buttons = [];
+
+            if (editingButtonIndex !== null) {
+                currentEditingUser.custom_buttons[editingButtonIndex] = { label, url };
+            } else {
+                currentEditingUser.custom_buttons.push({ label, url });
+            }
+            updatePreview(currentEditingUser);
+            closeButtonModal();
+        });
+        document.getElementById('modal-cancel-btn').addEventListener('click', closeButtonModal);
+
+        function deleteButton(index) {
+            if (confirm('Are you sure you want to delete this button?')) {
+                currentEditingUser.custom_buttons.splice(index, 1);
+                updatePreview(currentEditingUser);
+            }
+        }
+        
+        function renderPreviewButtons(user) {
+            const container = document.getElementById('preview-buttons');
+            // Remove old custom buttons and add button
+            container.querySelectorAll('.custom-preview-button, #add-button-btn').forEach(el => el.remove());
+            
+            const shapeClass = user.button_shape || 'rounded-lg';
+
+            (user.custom_buttons || []).forEach((button, index) => {
+                const btnEl = document.createElement('div');
+                btnEl.className = `custom-preview-button relative group bg-gray-200 text-gray-800 font-semibold p-3 text-center ${shapeClass}`;
+                btnEl.draggable = true;
+                btnEl.dataset.index = index;
+                btnEl.innerHTML = `
+                    <a href="${button.url}" target="_blank" class="pointer-events-none">${button.label}</a>
+                    <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                        <button class="text-white text-lg edit-btn"><i class="fas fa-pencil-alt"></i></button>
+                        <button class="text-white text-lg delete-btn"><i class="fas fa-trash"></i></button>
+                    </div>`;
+                btnEl.querySelector('.edit-btn').addEventListener('click', () => openButtonModal(index));
+                btnEl.querySelector('.delete-btn').addEventListener('click', () => deleteButton(index));
+                container.appendChild(btnEl);
+            });
+            
+             // Add the "+" button
+            container.innerHTML += `<button id="add-button-btn" class="w-full border-2 border-dashed border-gray-400 text-gray-400 font-semibold py-3 px-4 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"><i class="fas fa-plus mr-2"></i>Add Button</button>`;
+            document.getElementById('add-button-btn').addEventListener('click', () => openButtonModal());
+            
+            // Add drag listeners
+            container.querySelectorAll('.custom-preview-button').forEach(btn => {
+                btn.addEventListener('dragstart', e => {
+                    draggedButtonIndex = parseInt(e.target.dataset.index);
+                    e.target.classList.add('dragging');
+                });
+                btn.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+            });
+
+            container.addEventListener('dragover', e => {
+                e.preventDefault();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const currentIndicator = container.querySelector('.drag-over-indicator');
+                if (currentIndicator) currentIndicator.remove();
+                const indicator = document.createElement('div');
+                indicator.className = 'drag-over-indicator';
+                if (afterElement == null) {
+                    container.appendChild(indicator);
+                } else {
+                    container.insertBefore(indicator, afterElement);
+                }
+            });
+
+            container.addEventListener('drop', e => {
+                e.preventDefault();
+                container.querySelector('.drag-over-indicator')?.remove();
+                const afterElement = getDragAfterElement(container, e.clientY);
+                const newIndex = afterElement ? parseInt(afterElement.dataset.index) : currentEditingUser.custom_buttons.length;
+                
+                const movedButton = currentEditingUser.custom_buttons.splice(draggedButtonIndex, 1)[0];
+                const adjustedNewIndex = newIndex > draggedButtonIndex ? newIndex - 1 : newIndex;
+                currentEditingUser.custom_buttons.splice(adjustedNewIndex, 0, movedButton);
+
+                updatePreview(currentEditingUser); // Re-render with new order
+            });
+        }
+        
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.custom-preview-button:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
 
         // --- SETTINGS LOGIC ---
         saveSettingsBtn.addEventListener('click', () => {
@@ -593,20 +715,28 @@
                 scriptUrl = newUrl;
                 showToast('Settings saved!');
                 window.location.hash = '';
+                // Instead of reloading, just call handleRouting to show the homepage with new data
+                handleRouting();
             } else {
                 showToast('URL cannot be empty.', true);
             }
         });
-
+        
+        // --- GLOBAL HELPER ---
+        window.copyToClipboard = (text, label) => {
+             navigator.clipboard.writeText(text).then(() => {
+                showToast(`${label} copied to clipboard!`);
+            }, (err) => {
+                showToast(`Failed to copy ${label}`, true);
+            });
+        }
 
         // --- INITIALIZATION ---
         const savedTheme = localStorage.getItem('theme');
-        applyTheme(savedTheme ? savedTheme === 'dark' : true); // Default to dark theme
+        applyTheme(savedTheme ? savedTheme === 'dark' : true);
         handleRouting();
 
     });
     </script>
 </body>
 </html>
-
-

@@ -713,7 +713,7 @@ document.addEventListener('DOMContentLoaded', () => {
             renderProfilesList();
             
             // --- Part 2: Sync to Google Sheet ---
-            const webAppUrl = 'https://script.google.com/macros/s/AKfycbzYaQci2GLjzrB-HlkyNHlVmJRJCcLpmg1ICRA32CC89di9I52IAQAtfZofL2nY2GQ/exec'; // !!! IMPORTANT: REPLACE THIS URL !!!
+            const webAppUrl = 'https://script.google.com/macros/s/AKfycbynvfLLf6Lu9y3qfDrPSEHzXD6M3-dudLUwDKd-2LY-CBsN7Qkvui3GzAlSsMAXAlCD/exec'; // !!! IMPORTANT: REPLACE THIS URL !!!
             if (webAppUrl === 'YOUR_WEB_APP_URL') {
                 showToast(translations[currentLang]?.save_fail_config || "Saved locally. Configure Sheet URL to sync.");
                 console.error("🚨 Google Apps Script Web App URL is not set.");

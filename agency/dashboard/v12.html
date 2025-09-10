@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creador de vCard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    
+    <link rel="icon" href="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png">
+    
+    <style>
+        /* --- Base & Theme Variables --- */
+        :root {
+            --primary-color: #967e2d;
+            --primary-color-hover: #7a6824;
+            --background-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-color: #4a5568;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --text-secondary-public: #6B7280;
+            --input-bg: #fff;
+            --input-border: #e2e8f0;
+            --border-color: #d1d5db;
+            --bg-tertiary: rgba(46, 46, 46, 0.1);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        html.dark {
+            --primary-color: #967e2d;
+            --primary-color-hover: #525252;
+            --background-color: #111111;
+            --card-bg: rgba(46, 46, 46, 0.5);
+            --text-color: #e2e8f0;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            --text-secondary-public: #9CA3AF;
+            --input-bg: #000000;
+            --input-border: #525252;
+            --border-color: rgba(46, 46, 46, 0.5);
+            --bg-tertiary: rgba(46, 46, 46, 0.5);
+        }
+
+        /* --- General Styles --- */
+        html { scroll-behavior: smooth; }
+        * { padding: 0; margin: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            padding-top: 120px;
+            overflow-x: hidden;
+        }
+
+       .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--primary-color); border-radius: 4px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--primary-color); }
+        
+        
+        #vcard-form input,
+        #vcard-form textarea,
+        .public-profile-settings input,
+        .public-profile-settings textarea {
+            caret-color: var(--primary-color) !important;
+        }
+
+        /* --- Top Menu Bar --- */
+        .top-menu-bar {
+            position: fixed; 
+            top: 2rem; 
+            left: 50%;
+            transform: translateX(-50%); 
+            width: calc(100% - 2rem);
+            max-width: 1480px; 
+            background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
+            backdrop-filter: blur(10px); 
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow); 
+            border: 0px solid var(--input-border);
+            border-radius: 12px; 
+            padding: 0 1rem;
+            transition: top 0.3s ease-in-out; 
+                                        }
+        .top-menu-content { height: 80px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        #appLogo { height: 40px; width: 40px; object-fit: cover; border-radius: 8px; }
+        #appBrandNameDisplay { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+        .top-menu-actions { display: flex; align-items: center; gap: 0.5rem; }
+        .fab {
+            width: 40px; height: 40px; border-radius: 50%;
+            background-color: var(--background-color); color: var(--text-primary);
+            border: 1px solid var(--input-border); display: flex;
+            justify-content: center; align-items: center; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .fab:hover { background-color: var(--input-border); transform: scale(1.1); }
+        .fab:disabled { cursor: not-allowed; opacity: 0.7; }
+
+        .btn-primary {
+            background-color: var(--primary-color); color: white;
+            padding: 0.75rem 1.5rem; border: none; border-radius: 0.5rem;
+            font-weight: 600; text-align: center; transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background-color: var(--primary-color-hover); }
+
+        /* --- Side Panel --- */
+        #profiles-side-panel {
+            transition: transform 0.3s ease-in-out; transform: translateX(100%);
+        }
+        #profiles-side-panel.open { transform: translateX(0); }
+        .modal-hidden { display: none; }
+
+        /* --- Toast Notifications --- */
+        #toast {
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%); background-color: #2d3748;
+            color: white; padding: 12px 24px; border-radius: 9999px;
+            font-size: 0.875rem; opacity: 0; visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, bottom 0.3s;
+            z-index: 1200;
+        }
+        #toast.show { opacity: 1; visibility: visible; bottom: 30px; }
+
+        /* --- Tab Styling --- */
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom-color: var(--primary-color);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* --- Public Profile Preview Styles --- */
+        #public-profile-preview-container .preview-header-bg {
+            background-color: var(--primary-color);
+        }
+        .preview-action-button {
+             background-color: var(--primary-color);
+             color: white;
+             transition: background-color 0.2s;
+        }
+         .preview-action-button:hover {
+             background-color: var(--primary-color-hover);
+        }
+        #public-preview-title-org {
+            color: var(--text-secondary-public);
+        }
+        #public-profile-preview-container .preview-footer-signature {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+    </style>
+    <script>
+        // Set initial theme based on localStorage or system preference
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+        // Set initial primary color from localStorage
+        const savedColor = localStorage.getItem('vcard-primary-color');
+        if (savedColor) {
+            document.documentElement.style.setProperty('--primary-color', savedColor);
+        }
+    </script>
+</head>
+<body class="transition-colors duration-300">
+
+    <div class="top-menu-bar">
+        <div class="top-menu-content">
+            <div class="logo-container">
+                <img id="appLogo" src="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png" alt="Signature Logo">
+                <span id="appBrandNameDisplay" class="hidden sm:inline">Creador de vCard</span>
+            </div>
+        
+            <div class="top-menu-actions">
+                <div class="fab" id="viewSavedSignaturesBtn" title="Ver Perfiles Guardados"><i class="fas fa-bookmark"></i></div>
+                <div class="fab" title="Página de Inicio" onclick="window.open('https://bebell-digital-solutions.github.io/easylistings-agency', '_self')"><i class="fa fa-home"></i></div> 
+                <div class="fab" title="Centro de Ayuda" onclick="showToast('El centro de ayuda estará disponible pronto.')"><i class="fa fa-info-circle"></i></div>
+                <div class="fab" id="darkModeToggle" title="Cambiar Tema">
+                    <i class="fa-solid fa-sun block dark:hidden"></i>
+                    <i class="fa-solid fa-moon hidden dark:block"></i>
+                </div>
+                <button id="saveProfileBtnTop" class="btn-primary ml-2 hidden sm:block">Guardar Perfil</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-container" class="container mx-auto p-4 sm:p-6 lg:p-8">
+        
+        <main class="flex flex-col lg:flex-row gap-8">
+            
+            <div class="flex-1 min-w-0">
+                <div class="border-b border-[var(--border-color)] mb-6">
+                    <nav class="-mb-px flex space-x-6" aria-label="Tabs">
+                        <button id="vcard-tab-btn" class="tab-button active">Perfil vCard</button>
+                        <button id="public-profile-tab-btn" class="tab-button">Perfil Público</button>
+                    </nav>
+                </div>
+
+                <div class="h-[calc(100vh-250px)] overflow-y-auto custom-scrollbar pr-4">
+                    <div id="vcard-tab-content" class="tab-content active">
+                        <form id="vcard-form" class="space-y-6">
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Nombre</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Prefijo</label><input type="text" id="prefix" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Sufijo</label><input type="text" id="suffix" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Nombre</label><input type="text" id="firstname" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Segundo Nombre</label><input type="text" id="middlename" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Apellido</label><input type="text" id="lastname" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Apodo</label><input type="text" id="nickname" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Imágenes</h3>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-[var(--text-secondary)]">Subir Foto</label>
+                                            <input type="file" id="photo-upload" accept="image/png, image/jpeg, image/gif" class="mt-1 block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[var(--primary-color)]/10 file:text-[var(--primary-color)] hover:file:bg-[var(--primary-color)]/20">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-[var(--text-secondary)]">Subir Logo</label>
+                                            <input type="file" id="logo-upload" accept="image/png, image/jpeg, image/gif" class="mt-1 block w-full text-sm text-[var(--text-secondary)] file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-[var(--primary-color)]/10 file:text-[var(--primary-color)] hover:file:bg-[var(--primary-color)]/20">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Trabajo</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Organización</label><input type="text" id="organization" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Título</label><input type="text" id="title" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Rol</label><input type="text" id="role" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">URL del Trabajo</label><input type="url" id="work_url" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Correos Electrónicos</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Correo</label><input type="email" id="email" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Correo del Trabajo</label><input type="email" id="work_email" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Teléfonos</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Teléfono de Casa</label><input type="tel" id="home_phone" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Teléfono del Trabajo</label><input type="tel" id="work_phone" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Celular</label><input type="tel" id="cell_phone" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Buscapersonas</label><input type="tel" id="pager_phone" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Fax de Casa</label><input type="tel" id="home_fax" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Fax del Trabajo</label><input type="tel" id="work_fax" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Dirección de Casa</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="sm:col-span-2"><label class="block text-sm font-medium text-[var(--text-secondary)]">Calle</label><input type="text" id="home_street" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Ciudad</label><input type="text" id="home_city" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Estado / Provincia</label><input type="text" id="home_state" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Código Postal</label><input type="text" id="home_postal" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">País</label><input type="text" id="home_country" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Dirección del Trabajo</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div class="sm:col-span-2"><label class="block text-sm font-medium text-[var(--text-secondary)]">Calle</label><input type="text" id="work_street" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Ciudad</label><input type="text" id="work_city" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Estado / Provincia</label><input type="text" id="work_state" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Código Postal</label><input type="text" id="work_postal" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">País</label><input type="text" id="work_country" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-[var(--card-bg)] rounded-lg shadow-sm">
+                                    <h3 class="text-lg font-semibold border-b border-[var(--border-color)] pb-3 mb-4 text-[var(--text-primary)]">Redes Sociales</h3>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">LinkedIn</label><input type="url" id="social_linkedin" placeholder="https://www.linkedin.com/in/YOURPROFILE/" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Twitter</label><input type="url" id="social_twitter" placeholder="https://twitter.com/YOURPROFILE" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Facebook</label><input type="url" id="social_facebook" placeholder="https://www.facebook.com/YOURPROFILE/" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Instagram</label><input type="url" id="social_instagram" placeholder="https://www.instagram.com/YOURPROFILE/" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Threads</label><input type="url" id="social_threads" placeholder="https://www.threads.net/@YOURPROFILE" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">YouTube</label><input type="url" id="social_youtube" placeholder="https://www.youtube.com/c/YOURPROFILE" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">TikTok</label><input type="url" id="social_tiktok" placeholder="https://www.tiktok.com/@YOURPROFILE" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Pinterest</label><input type="url" id="social_pinterest" placeholder="https://www.pinterest.com/YOURPROFILE/" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Discord</label><input type="text" id="social_discord" placeholder="your_username" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Telegram</label><input type="text" id="social_telegram" placeholder="https://t.me/your_username" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">WhatsApp</label><input type="tel" id="social_whatsapp" placeholder="+1234567890" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font-medium text-[var(--text-secondary)]">Spotify</label><input type="url" id="social_spotify" placeholder="https://open.spotify.com/user/..." class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)]"></div>
+                                        <div><label class="block text-sm font

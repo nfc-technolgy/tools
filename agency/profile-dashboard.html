@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #000000;
+            --background-color: #f7fafc;
+            --card-bg: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --input-border: #d1d5db;
+            --input-bg: #fff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        html.dark {
+            --primary-color: #967e2d;
+            --primary-color-hover: #525252;
+            --background-color: #111111;
+            /* Change the card-bg from a solid color to a transparent one for glass effect */
+            --card-bg: rgba(46, 46, 46, 0.5); /* This is your original #2e2e2e at 50% opacity */
+            --text-color: #e2e8f0;
+            --text-primary: #f9fafb;
+            --text-secondary: #d1d5db;
+            
+            /* UPDATED INPUT STYLES FOR DARK THEME */
+            --input-bg: #000000; /* Pure black background */
+            --input-border: #525252; /* A lighter gray for better contrast against black */
+            --border-color: #4b5563;
+            --bg-tertiary: #4b5563;
+
+            /* Glass Effect Properties */
+            --card-border: rgba(255, 255, 255, 0.1); /* Light, transparent border */
+            --backdrop-blur: blur(10px); /* The blur effect */
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--background-color); 
+            color: var(--text-primary); 
+            padding-top: 120px; /* Space for fixed header */
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 4px; }
+        html.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+
+        /* Top Menu Bar Styles */
+       .top-menu-bar {
+            position: fixed;
+            top: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 2rem);
+            max-width: 1480px;
+            z-index: 1100;
+            background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow);
+            border-radius: 12px;
+            padding: 0 1rem;
+            transition: top 0.3s ease-in-out;
+        }
+        .top-menu-content { height: 80px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-container { display: flex; align-items: center; gap: 1rem; }
+        .top-menu-actions { display: flex; align-items: center; gap: 0.5rem; }
+        
+        .fab {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--background-color);
+            color: var(--text-primary);
+            border: 1px solid var(--input-border);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .fab:hover { background-color: var(--input-border); transform: scale(1.1); }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            text-align: center;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background-color: var(--primary-color-hover); }
+        .btn-primary:disabled { opacity: 0.7; cursor: not-allowed; }
+    </style>
+</head>
+<body class="transition-colors duration-300">
+
+    <!-- Top Bar Menu -->
+    <header class="top-menu-bar">
+        <div class="top-menu-content">
+            <div class="logo-container">
+                <img src="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png" alt="Logo" class="h-8 w-8 rounded-md object-cover">
+                <span class="font-bold text-xl">Profile Dashboard</span>
+            </div>
+            <div class="top-menu-actions">
+                <button id="home-btn" title="Homepage" class="fab">
+                    <i class="fas fa-home"></i>
+                </button>
+                <button id="settings-btn" title="Settings" class="fab">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button id="theme-toggle-btn" title="Toggle Theme" class="fab">
+                    <i class="fas fa-sun"></i>
+                    <i class="fas fa-moon hidden"></i>
+                </button>
+                 <button id="save-changes-btn" class="btn-primary ml-2 hidden">
+                    <i class="fas fa-save mr-2"></i>Save Changes
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <!-- Homepage: Grid of User Profiles -->
+        <div id="page-home" class="page active">
+            <h1 class="text-3xl font-bold mb-6 text-center">User Profiles</h1>
+            <div class="max-w-[1200px] mx-auto">
+                 <div id="user-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <!-- User cards will be injected here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Editor Page -->
+        <div id="page-editor" class="page">
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Left Column: Form -->
+                <div class="flex-1 h-[calc(100vh-170px)] overflow-y-auto custom-scrollbar pr-4">
+                    <form id="profile-editor-form" class="space-y-6">
+                        <!-- Form fields will be dynamically generated here -->
+                    </form>
+                </div>
+                <!-- Right Column: Preview -->
+                <div class="lg:w-[400px] lg:flex-shrink-0">
+                    <div class="sticky top-0">
+                         <h2 class="text-2xl font-bold mb-4 text-[var(--text-primary)]">Preview</h2>
+                         <div class="w-full max-w-[375px] mx-auto bg-white dark:bg-gray-800 rounded-[40px] h-[750px] p-4 shadow-2xl border-8 border-gray-800 dark:border-gray-900 overflow-hidden">
+                            <div class="h-full w-full overflow-y-auto custom-scrollbar mobile-preview-content bg-gray-50 dark:bg-gray-700">
+                                <!-- Mobile Preview Content -->
+                                <div id="preview-header" class="relative h-48 bg-black bg-cover bg-center">
+                                    <img id="preview-profile-picture" src="https://placehold.co/100x100/e2e8f0/64748b?text=PIC" class="w-24 h-24 rounded-full absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 border-4 border-white object-cover">
+                                </div>
+                                <div class="text-center pt-16 pb-6 px-4">
+                                    <h3 id="preview-name" class="text-xl font-bold text-gray-800 dark:text-gray-100">Your Name</h3>
+                                    <p id="preview-title-org" class="text-sm text-gray-500 dark:text-gray-400">Title at Organization</p>
+                                </div>
+                                <div id="preview-social-icons" class="flex justify-center flex-wrap gap-4 px-4 pb-4 border-b border-gray-200 dark:border-gray-600">
+                                    <!-- Social Icons will be injected here -->
+                                </div>
+                                <div id="preview-buttons" class="px-4 py-4 space-y-3">
+                                   <button class="w-full bg-gray-800 text-white font-semibold py-3 px-4 rounded-lg"><i class="fas fa-download mr-2"></i>Download Contact</button>
+                                    <!-- Custom Buttons will be injected here -->
+                                </div>
+                                 <div id="preview-map-container" class="mt-4 hidden">
+                                    <iframe id="preview-map" width="100%" height="250" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
+                                </div>
+                                <div id="preview-footer-container" class="relative mt-6 pt-16 pb-4 text-center">
+                                    <img id="preview-footer-logo" src="https://placehold.co/70x70/e2e8f0/64748b?text=LOGO" class="w-16 h-16 absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 object-contain">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">Powered with ⭐️ by NFC Technology</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Page -->
+        <div id="page-settings" class="page">
+            <h1 class="text-3xl font-bold mb-6">Settings</h1>
+            <div class="max-w-xl mx-auto bg-[var(--card-bg)] p-6 rounded-lg shadow">
+                <div class="space-y-4">
+                    <div>
+                        <label for="script-url" class="block text-sm font-medium text-[var(--text-secondary)]">Google Apps Script URL</label>
+                        <input type="url" id="script-url" placeholder="Enter your Web App URL" class="mt-1 block w-full rounded-md border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
+                    </div>
+                    <div class="text-right">
+                        <button id="save-settings-btn" class="btn-primary">Save Settings</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Public Profile View Page -->
+        <div id="page-public-view" class="page">
+            <!-- Public profile content will be injected here -->
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-5 right-5 bg-gray-900 text-white py-2 px-4 rounded-lg shadow-lg opacity-0 translate-y-10 transition-all duration-300">
+            <p id="toast-message">Message</p>
+        </div>
+
+    </main>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- STATE & CONFIG ---
+        let scriptUrl = localStorage.getItem('profileAppScriptUrl') || '';
+        let allUsers = [];
+        let currentEditingUser = null;
+
+        // --- DOM ELEMENTS ---
+        const pages = document.querySelectorAll('.page');
+        const homeBtn = document.getElementById('home-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const themeToggleBtn = document.getElementById('theme-toggle-btn');
+        const userGrid = document.getElementById('user-grid');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const scriptUrlInput = document.getElementById('script-url');
+        const editorForm = document.getElementById('profile-editor-form');
+        const saveChangesBtn = document.getElementById('save-changes-btn');
+
+        // --- TOAST NOTIFICATION ---
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        function showToast(message, isError = false) {
+            toastMessage.textContent = message;
+            toast.className = toast.className.replace(/bg-red-600|bg-gray-900/g, '');
+            toast.classList.add(isError ? 'bg-red-600' : 'bg-gray-900');
+            toast.classList.remove('opacity-0', 'translate-y-10');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-10');
+            }, 3000);
+        }
+
+        // --- THEME ---
+        function applyTheme(isDark) {
+            const sunIcon = themeToggleBtn.querySelector('.fa-sun');
+            const moonIcon = themeToggleBtn.querySelector('.fa-moon');
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            }
+        }
+        themeToggleBtn.addEventListener('click', () => {
+            const isDark = !document.documentElement.classList.contains('dark');
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            applyTheme(isDark);
+        });
+        
+        // --- ROUTING ---
+        function showPage(pageId) {
+            pages.forEach(page => {
+                page.classList.toggle('active', page.id === pageId);
+            });
+            // Show/hide save button based on page
+            saveChangesBtn.classList.toggle('hidden', pageId !== 'page-editor');
+        }
+
+        function handleRouting() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const view = params.get('view');
+            const editId = params.get('edit');
+            const publicId = params.get('user');
+
+            if (publicId) {
+                loadPublicProfile(publicId);
+            } else if (editId) {
+                loadEditorForUser(editId);
+            } else if (view === 'settings') {
+                scriptUrlInput.value = scriptUrl;
+                showPage('page-settings');
+            } else {
+                loadHomepage();
+            }
+        }
+
+        homeBtn.addEventListener('click', () => window.location.hash = '');
+        settingsBtn.addEventListener('click', () => window.location.hash = 'view=settings');
+        window.addEventListener('hashchange', handleRouting);
+
+
+        // --- DATA FETCHING ---
+        async function fetchFromScript(action, params = {}) {
+            if (!scriptUrl) {
+                showToast('Please set your Google Apps Script URL in Settings.', true);
+                window.location.hash = 'view=settings';
+                return null;
+            }
+            const url = new URL(scriptUrl);
+            url.searchParams.append('action', action);
+            for (const key in params) {
+                url.searchParams.append(key, params[key]);
+            }
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                const result = await response.json();
+                if (result.status === 'error') throw new Error(result.message);
+                return result.data;
+            } catch (error) {
+                console.error('Fetch error:', error);
+                showToast(`Error: ${error.message}`, true);
+                return null;
+            }
+        }
+
+        async function postToScript(action, data) {
+             if (!scriptUrl) {
+                showToast('Please set your Google Apps Script URL in Settings.', true);
+                return null;
+            }
+            try {
+                const response = await fetch(scriptUrl, {
+                    method: 'POST',
+                    mode: 'no-cors', 
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action, data })
+                });
+                return { status: 'success' };
+            } catch (error) {
+                console.error('POST error:', error);
+                showToast(`Save Error: ${error.message}`, true);
+                return { status: 'error', message: error.message };
+            }
+        }
+
+        // --- HOMEPAGE LOGIC ---
+        async function loadHomepage() {
+            allUsers = await fetchFromScript('getAllUsers');
+            renderUserGrid(allUsers);
+            showPage('page-home');
+        }
+
+        function renderUserGrid(users) {
+            userGrid.innerHTML = '';
+            if (!users || users.length === 0) {
+                userGrid.innerHTML = '<p class="col-span-full text-center text-[var(--text-secondary)]">No profiles found in the spreadsheet.</p>';
+                return;
+            }
+            users.forEach(user => {
+                const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+                const card = document.createElement('div');
+                card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
+                card.dataset.userId = user.uid;
+
+                const headerStyle = user.header_image ? `background-image: url('${user.header_image}')` : `background-color: ${user.header_color || 'black'}`;
+                
+                card.innerHTML = `
+                    <div class="h-24 bg-cover bg-center" style="${headerStyle}"></div>
+                    <div class="p-4 flex flex-col items-center -mt-12">
+                        <img src="${user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC'}" class="w-20 h-20 rounded-full border-4 border-[var(--card-bg)] object-cover">
+                        <h3 class="mt-2 text-lg font-bold text-center">${fullName || 'Unnamed Profile'}</h3>
+                        <p class="text-sm text-[var(--text-secondary)] text-center">${user.title || ''}${user.organization ? ' at ' + user.organization : ''}</p>
+                    </div>
+                `;
+                card.addEventListener('click', () => {
+                    window.location.hash = `edit=${user.uid}`;
+                });
+                userGrid.appendChild(card);
+            });
+        }
+
+
+        // --- EDITOR LOGIC ---
+        async function loadEditorForUser(userId) {
+            currentEditingUser = await fetchFromScript('getUser', { id: userId });
+            if (currentEditingUser) {
+                renderEditorForm(currentEditingUser);
+                updatePreview(currentEditingUser);
+                showPage('page-editor');
+            } else {
+                 showToast(`Could not load user with ID: ${userId}`, true);
+                 window.location.hash = ''; // Go home if user not found
+            }
+        }
+
+        function renderEditorForm(user) {
+           editorForm.innerHTML = ''; // Clear previous form
+            const fields = [
+                { group: 'Name', id: 'prefix', label: 'Prefix' }, { group: 'Name', id: 'firstname', label: 'First Name' },
+                { group: 'Name', id: 'middlename', label: 'Middle Name' }, { group: 'Name', id: 'lastname', label: 'Last Name' },
+                { group: 'Name', id: 'suffix', label: 'Suffix' }, { group: 'Name', id: 'nickname', label: 'Nickname' },
+                { group: 'Work', id: 'organization', label: 'Organization' }, { group: 'Work', id: 'title', label: 'Title' },
+                { group: 'Work', id: 'work_url', label: 'Work URL', type: 'url' },
+                { group: 'Appearance', id: 'header_color', label: 'Header Color', type: 'color'}, { group: 'Appearance', id: 'header_image', label: 'Header Image URL', type: 'url'},
+                { group: 'Appearance', id: 'profile_picture', label: 'Profile Picture URL', type: 'url'}, { group: 'Appearance', id: 'primary_color', label: 'Primary Color', type: 'color'},
+                { group: 'Appearance', id: 'footer_logo', label: 'Footer Logo URL', type: 'url'},
+                { group: 'Contact', id: 'email', label: 'Email', type: 'email' }, { group: 'Contact', id: 'work_email', label: 'Work Email', type: 'email' },
+                { group: 'Contact', id: 'cell_phone', label: 'Cell Phone', type: 'tel' }, { group: 'Contact', id: 'location', label: 'Location (for Map)'},
+                // Social Links
+                { group: 'Social', id: 'social_linkedin', label: 'LinkedIn', type: 'url' }, { group: 'Social', id: 'social_twitter', label: 'Twitter', type: 'url' },
+                { group: 'Social', id: 'social_facebook', label: 'Facebook', type: 'url' }, { group: 'Social', id: 'social_instagram', label: 'Instagram', type: 'url' },
+                { group: 'Social', id: 'social_whatsapp', label: 'WhatsApp (Phone #)', type: 'tel' },
+            ];
+
+            const groupedFields = fields.reduce((acc, field) => {
+                if (!acc[field.group]) acc[field.group] = [];
+                acc[field.group].push(field);
+                return acc;
+            }, {});
+
+            for (const groupName in groupedFields) {
+                const groupWrapper = document.createElement('div');
+                groupWrapper.className = 'p-6 bg-[var(--card-bg)] rounded-lg shadow-sm';
+                groupWrapper.innerHTML = `<h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">${groupName}</h3>`;
+                
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4';
+                
+                groupedFields[groupName].forEach(field => {
+                    const value = user[field.id] || '';
+                    const inputWrapper = document.createElement('div');
+                    if (field.type === 'color') {
+                         inputWrapper.innerHTML = `
+                            <label for="${field.id}" class="block text-sm font-medium text-[var(--text-secondary)]">${field.label}</label>
+                            <input type="${field.type || 'text'}" id="${field.id}" name="${field.id}" value="${value}" class="mt-1 h-10 block w-full rounded-md border-0 p-0 bg-transparent cursor-pointer">`;
+                    } else {
+                         inputWrapper.innerHTML = `
+                            <label for="${field.id}" class="block text-sm font-medium text-[var(--text-secondary)]">${field.label}</label>
+                            <input type="${field.type || 'text'}" id="${field.id}" name="${field.id}" value="${value}" class="mt-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-[var(--primary-color)] focus:ring-[var(--primary-color)] text-[var(--text-primary)] p-2">`;
+                    }
+                    grid.appendChild(inputWrapper);
+                });
+                groupWrapper.appendChild(grid);
+                editorForm.appendChild(groupWrapper);
+            }
+            // Add custom buttons section
+            renderCustomButtonsEditor(user.custom_buttons || []);
+            editorForm.addEventListener('input', () => {
+                const formData = new FormData(editorForm);
+                const updatedUser = { ...currentEditingUser };
+                 for (const [key, value] of formData.entries()) {
+                    updatedUser[key] = value;
+                }
+                updatedUser.custom_buttons = getCustomButtonsFromForm();
+                updatePreview(updatedUser);
+            });
+        }
+        
+        function renderCustomButtonsEditor(buttons) {
+            const container = document.createElement('div');
+            container.id = 'custom-buttons-editor';
+            container.className = 'p-6 bg-[var(--card-bg)] rounded-lg shadow-sm';
+            container.innerHTML = `<h3 class="text-lg font-semibold border-b border-[var(--input-border)] pb-3 mb-4 text-[var(--text-primary)]">Custom Buttons</h3>`;
+            const buttonList = document.createElement('div');
+            buttonList.id = 'custom-buttons-list';
+            buttonList.className = 'space-y-4';
+            container.appendChild(buttonList);
+            
+            const addButton = document.createElement('button');
+            addButton.type = 'button';
+            addButton.textContent = 'Add Custom Button';
+            addButton.className = 'mt-4 text-sm bg-gray-200 dark:bg-gray-600 py-2 px-3 rounded-md hover:bg-gray-300 dark:hover:bg-gray-500';
+            addButton.addEventListener('click', () => addCustomButtonField());
+
+            container.appendChild(addButton);
+            editorForm.appendChild(container);
+            buttons.forEach(btn => addCustomButtonField(btn.label, btn.url));
+        }
+
+        function addCustomButtonField(label = '', url = '') {
+            const list = document.getElementById('custom-buttons-list');
+            const fieldWrapper = document.createElement('div');
+            fieldWrapper.className = 'flex items-center gap-2 custom-button-field';
+            fieldWrapper.innerHTML = `
+                <input type="text" name="custom_button_label" placeholder="Button Label" value="${label}" class="flex-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
+                <input type="url" name="custom_button_url" placeholder="Button URL" value="${url}" class="flex-1 block w-full rounded-md border border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm p-2">
+                <button type="button" class="text-red-500 hover:text-red-700 p-2 remove-button"><i class="fas fa-trash"></i></button>
+            `;
+            fieldWrapper.querySelector('.remove-button').addEventListener('click', () => fieldWrapper.remove());
+            list.appendChild(fieldWrapper);
+        }
+
+        function getCustomButtonsFromForm() {
+            const buttons = [];
+            const fields = editorForm.querySelectorAll('.custom-button-field');
+            fields.forEach(field => {
+                const label = field.querySelector('input[name="custom_button_label"]').value.trim();
+                const url = field.querySelector('input[name="custom_button_url"]').value.trim();
+                if (label && url) {
+                    buttons.push({ label, url });
+                }
+            });
+            return buttons;
+        }
+
+
+        function updatePreview(user) {
+            document.getElementById('preview-name').textContent = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
+            document.getElementById('preview-title-org').textContent = `${user.title || ''}${user.organization ? ' at ' + user.organization : ''}`;
+            const header = document.getElementById('preview-header');
+            header.style.backgroundColor = user.header_color || 'black';
+            header.style.backgroundImage = user.header_image ? `url('${user.header_image}')` : 'none';
+            document.getElementById('preview-profile-picture').src = user.profile_picture || 'https://placehold.co/100x100/e2e8f0/64748b?text=PIC';
+            document.getElementById('preview-footer-logo').src = user.footer_logo || 'https://placehold.co/70x70/e2e8f0/64748b?text=LOGO';
+            document.getElementById('preview-footer-container').style.backgroundColor = user.primary_color || 'transparent';
+
+            const mapContainer = document.getElementById('preview-map-container');
+            if (user.location) {
+                mapContainer.classList.remove('hidden');
+                document.getElementById('preview-map').src = `https://www.google.com/maps/embed/v1/place?key=YOUR_API_KEY&q=${encodeURIComponent(user.location)}`;
+            } else {
+                mapContainer.classList.add('hidden');
+            }
+
+            const socialContainer = document.getElementById('preview-social-icons');
+            socialContainer.innerHTML = '';
+            const socialFields = ['linkedin', 'twitter', 'facebook', 'instagram', 'whatsapp', 'email', 'work_email', 'work_url'];
+            const iconMap = { linkedin: 'fab fa-linkedin', twitter: 'fab fa-twitter', facebook: 'fab fa-facebook', instagram: 'fab fa-instagram', whatsapp: 'fab fa-whatsapp', email: 'fas fa-envelope', work_email: 'fas fa-briefcase', work_url: 'fas fa-globe' };
+            socialFields.forEach(key => {
+                const fullKey = `social_${key}`;
+                const value = user[fullKey] || user[key];
+                 if (value) {
+                    let href = value;
+                    if (key === 'whatsapp') href = `https://wa.me/${value.replace(/\D/g, '')}`;
+                    if (key === 'email' || key === 'work_email') href = `mailto:${value}`;
+                    socialContainer.innerHTML += `<a href="${href}" target="_blank" class="text-2xl text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"><i class="${iconMap[key]}"></i></a>`;
+                }
+            });
+
+            const buttonsContainer = document.getElementById('preview-buttons');
+            buttonsContainer.querySelectorAll('.custom-preview-button').forEach(btn => btn.remove());
+            (user.custom_buttons || []).forEach(btn => {
+                buttonsContainer.innerHTML += `<a href="${btn.url}" target="_blank" class="custom-preview-button block w-full bg-gray-200 text-gray-800 font-semibold py-3 px-4 rounded-lg text-center">${btn.label}</a>`;
+            });
+        }
+        
+        async function handleSaveChanges() {
+            const saveBtn = document.getElementById('save-changes-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            
+            const formData = new FormData(editorForm);
+            const updatedUserData = { uid: currentEditingUser.uid };
+
+            for (let [key, value] of formData.entries()) {
+                updatedUserData[key] = value;
+            }
+            updatedUserData.custom_buttons = getCustomButtonsFromForm();
+
+            const result = await postToScript('updateUser', updatedUserData);
+
+            if (result && result.status === 'success') {
+                showToast('Profile saved successfully!');
+                const userIndex = allUsers.findIndex(u => u.uid === updatedUserData.uid);
+                if (userIndex > -1) {
+                    allUsers[userIndex] = { ...allUsers[userIndex], ...updatedUserData };
+                }
+            } else {
+                showToast('Failed to save profile. See console for details.', true);
+            }
+
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Save Changes';
+        }
+
+        saveChangesBtn.addEventListener('click', handleSaveChanges);
+
+        // --- PUBLIC PROFILE LOGIC ---
+        function loadPublicProfile(userId) {
+            // Placeholder
+            const publicPage = document.getElementById('page-public-view');
+            publicPage.innerHTML = `<h1 class="text-3xl font-bold">Public Profile for User ${userId}</h1><p>This page would display the user's public profile card.</p>`;
+            showPage('page-public-view');
+        }
+
+
+        // --- SETTINGS LOGIC ---
+        saveSettingsBtn.addEventListener('click', () => {
+            const newUrl = scriptUrlInput.value.trim();
+            if (newUrl) {
+                localStorage.setItem('profileAppScriptUrl', newUrl);
+                scriptUrl = newUrl;
+                showToast('Settings saved!');
+                window.location.hash = '';
+            } else {
+                showToast('URL cannot be empty.', true);
+            }
+        });
+
+
+        // --- INITIALIZATION ---
+        const savedTheme = localStorage.getItem('theme');
+        applyTheme(savedTheme ? savedTheme === 'dark' : true); // Default to dark theme
+        handleRouting();
+
+    });
+    </script>
+</body>
+</html>
+
+

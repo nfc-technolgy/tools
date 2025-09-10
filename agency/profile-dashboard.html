@@ -9,7 +9,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         :root {
-            --primary-color: #000000;
+            --primary-color: #967e2d;
+            --primary-color-hover: #826c22; /* Darker gold for hover */
             --background-color: #f7fafc;
             --card-bg: #ffffff;
             --text-primary: #1f2937;
@@ -20,7 +21,7 @@
         }
         html.dark {
             --primary-color: #967e2d;
-            --primary-color-hover: #525252;
+            --primary-color-hover: #826c22; /* Consistent hover color */
             --background-color: #111111;
             --card-bg: rgba(46, 46, 46, 0.5); 
             --text-primary: #f9fafb;
@@ -44,11 +45,11 @@
 
         .top-menu-bar {
             position: fixed;
-            top: 2rem;
+            top: 3rem;
             left: 50%;
             transform: translateX(-50%);
             width: calc(100% - 2rem);
-            max-width: 1480px;
+            max-width: 1200px;
             z-index: 1100;
             background-color: color-mix(in srgb, var(--card-bg) 85%, transparent);
             backdrop-filter: blur(10px);
@@ -93,10 +94,10 @@
         .modal-hidden { display: none; }
         
         /* Dragging styles */
-        .dragging { opacity: 0.5; background-color: #3b82f6 !important; }
+        .dragging { opacity: 0.5; background-color: #967e2d !important; }
         .drag-over-indicator {
             height: 4px;
-            background-color: #3b82f6;
+            background-color: #967e2d;
             margin: 2px 0;
             border-radius: 2px;
         }
@@ -193,7 +194,7 @@
                         <label for="script-url" class="block text-sm font-medium text-[var(--text-secondary)]">Google Apps Script URL</label>
                         <input type="url" id="script-url" placeholder="Enter your Web App URL" class="mt-1 block w-full rounded-md border-[var(--input-border)] bg-[var(--input-bg)] shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2">
                     </div>
-                     <div class="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 rounded-lg">
+                     <div class="p-4 bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-300 rounded-lg">
                         <p class="text-sm">After saving, the app will reload all profiles from your Google Sheet. You must re-deploy your script as a Web App to get a URL.</p>
                     </div>
                     <div class="text-right">
@@ -389,7 +390,7 @@
                 const fullName = [user.prefix, user.firstname, user.middlename, user.lastname, user.suffix].filter(Boolean).join(' ');
                 
                 const card = document.createElement('div');
-                card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden flex flex-col transition-transform duration-300 hover:-translate-y-1';
+                card.className = 'bg-[var(--card-bg)] rounded-lg shadow-md overflow-hidden flex flex-col transition-transform duration-300 hover:-translate-y-1 cursor-pointer';
                 
                 const headerStyle = user.header_image ? `background-image: url('${user.header_image}')` : `background-color: ${user.header_color || 'black'}`;
                 
@@ -407,7 +408,7 @@
                                 <span class="text-xs font-medium text-[var(--text-secondary)]">${Math.round(progressPercentage)}%</span>
                             </div>
                             <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full" style="width: ${progressPercentage}%"></div>
+                                <div class="bg-[#967e2d] h-2 rounded-full" style="width: ${progressPercentage}%"></div>
                             </div>
                         </div>
                         <div>
@@ -418,16 +419,15 @@
                                 <a href="${publicUrl}" target="_blank" title="Open URL" class="external-link-btn shrink-0 text-[var(--text-secondary)] hover:text-[var(--text-primary)]"><i class="fas fa-external-link-alt"></i></a>
                             </div>
                         </div>
-                        <button class="edit-profile-btn mt-4 w-full text-center bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-2 rounded-md font-semibold text-sm transition-colors">Edit Profile</button>
                     </div>`;
 
                 // Add event listeners programmatically to handle clicks and stop propagation
-                card.querySelector('.edit-profile-btn').addEventListener('click', () => { window.location.hash = `edit=${user.uid}`; });
+                card.addEventListener('click', () => { window.location.hash = `edit=${user.uid}`; });
                 card.querySelector('.copy-btn').addEventListener('click', (e) => {
-                    e.stopPropagation();
+                    e.stopPropagation(); // Prevents card click from firing
                     copyToClipboard(e.currentTarget.dataset.url, 'Public URL');
                 });
-                card.querySelector('.external-link-btn').addEventListener('click', (e) => { e.stopPropagation(); });
+                card.querySelector('.external-link-btn').addEventListener('click', (e) => { e.stopPropagation(); }); // Prevents card click from firing
 
                 userGrid.appendChild(card);
             });
@@ -781,4 +781,5 @@
     </script>
 </body>
 </html>
+
 

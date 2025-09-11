@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
-    
     <link rel="icon" href="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png">
     
     <style>
@@ -182,7 +181,7 @@
         <div class="top-menu-content">
             <div class="logo-container">
                 <img id="appLogo" src="https://bucket.mlcdn.com/a/3336/3336910/images/d577c668de71834ffb177ae13891eae7f182635a.png" alt="Signature Logo">
-                <span id="appBrandNameDisplay" class="hidden sm:inline">NFC Technology</span>
+                <span id="appBrandNameDisplay" class="hidden sm:inline">Creador de vCard</span>
             </div>
         
             <div class="top-menu-actions">
@@ -447,7 +446,7 @@
                                      </div>
                                 </div>
                                 
-                                <div class="pt-20 pb-6 px-6 text-center">
+                                <div class="pt-24 pb-6 px-6 text-center">
                                     <h3 id="public-preview-name" class="text-xl font-bold text-[var(--primary-color)]">Su Nombre</h3>
                                     <p id="public-preview-title-org">Título en Organización</p>
                                     <div id="public-preview-social" class="mt-4 flex justify-center flex-wrap gap-3 text-xl text-[var(--text-secondary)]"></div>
@@ -506,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let photoData = { base64: null, type: null };
     let logoData = { base64: null, type: null };
     let customButtons = [];
+    let publicProfileData = null; // Holds profile data when in public view mode
 
     // --- DOM Elements ---
     const allInputIds = [ 'prefix', 'suffix', 'firstname', 'middlename', 'lastname', 'nickname', 'organization', 'title', 'role', 'work_url', 'email', 'work_email', 'home_phone', 'work_phone', 'cell_phone', 'pager_phone', 'home_fax', 'work_fax', 'home_street', 'home_city', 'home_state', 'home_postal', 'home_country', 'work_street', 'work_city', 'work_state', 'work_postal', 'work_country', 'social_linkedin', 'social_twitter', 'social_facebook', 'social_instagram', 'social_threads', 'social_youtube', 'social_tiktok', 'social_pinterest', 'social_discord', 'social_telegram', 'social_whatsapp', 'social_spotify', 'social_airbnb', 'note', 'uid' ];
@@ -669,7 +669,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const getVal = (id) => document.getElementById(id).value.trim();
         const buttonShape = getVal('public-button-shape');
         
-        // Update basic info
         const fullName = [getVal('prefix'), getVal('firstname'), getVal('middlename'), getVal('lastname'), getVal('suffix')].filter(Boolean).join(' ');
         document.getElementById('public-preview-name').textContent = fullName || 'Su Nombre';
 
@@ -677,18 +676,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const org = getVal('organization');
         document.getElementById('public-preview-title-org').textContent = (title && org) ? `${title} en ${org}` : title || org || 'Título en Organización';
 
-        // Render social icons
         const socialFields = [ { type: 'linkedin', url: getVal('social_linkedin') }, { type: 'twitter', url: getVal('social_twitter') }, { type: 'facebook', url: getVal('social_facebook') }, { type: 'instagram', url: getVal('social_instagram') }, { type: 'threads', url: getVal('social_threads') }, { type: 'youtube', url: getVal('social_youtube') }, { type: 'tiktok', url: getVal('social_tiktok') }, { type: 'pinterest', url: getVal('social_pinterest') }, { type: 'discord', url: getVal('social_discord') }, { type: 'telegram', url: getVal('social_telegram') }, { type: 'whatsapp', url: getVal('social_whatsapp') }, { type: 'spotify', url: getVal('social_spotify') }, { type: 'airbnb', url: getVal('social_airbnb') } ];
         const socialHtml = socialFields.filter(s => s.url).map(s => `
             <a href="${formatActionURL(s.url)}" target="_blank"
-               class="flex-shrink-0 flex items-center justify-center w-9 h-9 text-white bg-black hover:bg-gray-700 transition-all rounded-full"
+               class="flex-shrink-0 flex items-center justify-center w-9 h-9 aspect-square text-white bg-black hover:bg-gray-700 transition-all rounded-full"
                title="${s.type}">
                  ${socialIconSVG(s.type)}
             </a>
         `).join('');
         document.getElementById('public-preview-social').innerHTML = socialHtml;
 
-          // Update images
            const publicPhotoPreview = document.getElementById('public-preview-photo');
            const photoUrl = getVal('public-photo-url');
            if (photoData.base64) {
@@ -711,7 +708,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 publicLogoPreview.style.display = 'none';
            }
 
-           // Update appearance settings
            const primaryColor = getVal('public-primary-color');
            document.documentElement.style.setProperty('--primary-color', primaryColor);
            document.getElementById('public-preview-footer').style.backgroundColor = primaryColor;
@@ -723,33 +719,15 @@ document.addEventListener('DOMContentLoaded', () => {
            const headerBgUrl = getVal('public-header-bg-url');
            document.getElementById('public-preview-header-img').src = headerBgUrl ? headerBgUrl : 'https://bucket.mlcdn.com/a/3336/3336910/images/cc22ad61e2ee0777b13492321845a5b0d1242e75.png';
 
-           // Update buttons
            const buttonsContainer = document.getElementById('public-preview-buttons-container');
            buttonsContainer.innerHTML = '';
            
-           // -- Add Download Contact button
-           const profile = profiles.find(p => p.id === currentProfileId);
-           if (profile && profile.vcf_url) {
-                const downloadContactBtn = document.createElement('button');
-                downloadContactBtn.id = 'public-download-vcf-btn';
-                downloadContactBtn.className = `preview-action-button block w-full text-center font-bold h-14 px-4 flex items-center justify-center shadow-md focus:outline-none transition-transform transform hover:scale-105 ${buttonShape}`;
-                downloadContactBtn.textContent = 'Descargar Contacto';
-                buttonsContainer.appendChild(downloadContactBtn);
-           }
-
-           // Update Shareable URL (now on the left panel)
-            if (profile && profile.uid) {
-                const pageUrl = window.location.href.split('?')[0].split('#')[0];
-                const publicUrl = `${pageUrl}?profile=${profile.uid}`;
-
-                shareableUrlInput.value = publicUrl;
-                openUrlBtn.href = publicUrl;
-                shareableUrlContainer.classList.remove('hidden');
-            } else {
-                shareableUrlContainer.classList.add('hidden');
-            }
-
-           // -- Add Custom buttons
+           const downloadContactBtn = document.createElement('button');
+           downloadContactBtn.id = 'public-download-vcf-btn';
+           downloadContactBtn.className = `preview-action-button block w-full text-center font-bold h-14 px-4 flex items-center justify-center shadow-md focus:outline-none transition-transform transform hover:scale-105 ${buttonShape}`;
+           downloadContactBtn.textContent = 'Descargar Contacto';
+           buttonsContainer.appendChild(downloadContactBtn);
+           
            customButtons.forEach(button => {
                 if (button.text && button.url) {
                      const customBtn = document.createElement('a');
@@ -761,7 +739,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
            });
 
-           // Update Map
            const mapContainer = document.getElementById('public-preview-map-container');
            const workAddress = [getVal('work_street'), getVal('work_city'), getVal('work_state'), getVal('work_postal'), getVal('work_country')].filter(Boolean).join(', ');
            if (workAddress) {
@@ -771,6 +748,18 @@ document.addEventListener('DOMContentLoaded', () => {
            } else {
                 mapContainer.classList.add('hidden');
            }
+
+            const profile = profiles.find(p => p.id === currentProfileId);
+            if (profile && profile.uid) {
+                const pageUrl = window.location.href.split('?')[0].split('#')[0];
+                const publicUrl = `${pageUrl}?profile=${profile.uid}`;
+
+                shareableUrlInput.value = publicUrl;
+                openUrlBtn.href = publicUrl;
+                shareableUrlContainer.classList.remove('hidden');
+            } else {
+                shareableUrlContainer.classList.add('hidden');
+            }
     };
 
     const populateWorkInfoLinks = () => {
@@ -823,10 +812,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const vcardPreviewImg = document.getElementById(previewElementId);
         const publicPreviewImg = document.getElementById(isLogo ? 'public-preview-logo' : 'public-preview-photo');
 
-        // Clear file-based data
         dataObject.base64 = null;
         dataObject.type = null;
-        fileUploadElement.value = ''; // Clear the file input
+        fileUploadElement.value = '';
 
         if (url) {
             vcardPreviewImg.src = url;
@@ -836,7 +824,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 publicPreviewImg.style.display = 'block';
             }
         } else {
-            // If URL is cleared, revert to placeholder
             if (isLogo) {
                 vcardPreviewImg.src = ''; vcardPreviewImg.style.display = 'none';
                 publicPreviewImg.src = ''; publicPreviewImg.style.display = 'none';
@@ -870,19 +857,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const reader = new FileReader();
         reader.onload = (e) => {
-            vcardPreviewImg.src = e.target.result;
-            publicPreviewImg.src = e.target.result;
+            const result = e.target.result;
+            vcardPreviewImg.src = result;
+            publicPreviewImg.src = result;
             if (isLogo) { 
                 vcardPreviewImg.style.display = 'block'; 
                 publicPreviewImg.style.display = 'block'; 
             }
-            const [header, base64String] = e.target.result.split(',');
+            const [header, base64String] = result.split(',');
             dataObject.base64 = base64String;
             dataObject.type = file.type;
         };
         reader.readAsDataURL(file);
     };
-    
+
     // --- vCARD GENERATION & DOWNLOAD ---
     const foldVCardLine = (line) => {
         const maxLineLength = 75;
@@ -899,18 +887,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const formatImageForVCard = (base64Data, mimeType, field) => {
          const maxLineLength = 75;
          const prefix = `${field};ENCODING=b;TYPE=${mimeType.split('/')[1].toUpperCase()}:`;
-         const firstLineSpace = maxLineLength - prefix.length;
-         if (firstLineSpace <= 0) {
-             let result = prefix + '\r\n '; let remainingData = base64Data;
-             while (remainingData.length > 0) {
-                  const chunk = remainingData.substring(0, maxLineLength - 1);
-                  result += chunk + (remainingData.length > chunk.length ? '\r\n ' : '');
-                  remainingData = remainingData.substring(chunk.length);
-             }
-             return result.trim();
+         let result = prefix;
+         let remainingData = base64Data;
+         let firstChunkSize = maxLineLength - prefix.length;
+         if (firstChunkSize > 0) {
+             result += remainingData.substring(0, firstChunkSize);
+             remainingData = remainingData.substring(firstChunkSize);
          }
-         let result = prefix + base64Data.substring(0, firstLineSpace);
-         let remainingData = base64Data.substring(firstLineSpace);
          while (remainingData.length > 0) {
             const chunk = remainingData.substring(0, maxLineLength - 1);
             result += '\r\n ' + chunk;
@@ -918,49 +901,99 @@ document.addEventListener('DOMContentLoaded', () => {
          }
          return result;
     };
+    
+    const imageUrlToBase64 = async (url) => {
+        try {
+            // Using a CORS proxy for development/demo purposes. 
+            // In a real-world scenario, images should be hosted on a server that allows cross-origin requests.
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const response = await fetch(proxyUrl + url);
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                    const [header, base64] = reader.result.split(',');
+                    resolve({ base64, type: blob.type });
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        } catch (error) {
+            console.warn(`Could not fetch image for VCF embedding from ${url}. This might be a CORS issue.`, error);
+            showToast("No se pudo incrustar la imagen de la URL (posiblemente un problema de CORS).");
+            return null;
+        }
+    };
 
-    const generateVCF = async () => {
-        const getVal = (id) => document.getElementById(id).value.trim();
+    const generateVCF = (profile) => {
+        const p = (key) => profile[key] || '';
         let vcfContent = ['BEGIN:VCARD', 'VERSION:3.0'];
-        vcfContent.push(`N:${getVal('lastname')};${getVal('firstname')};${getVal('middlename')};${getVal('prefix')};${getVal('suffix')}`);
-        vcfContent.push(`FN:${[getVal('prefix'), getVal('firstname'), getVal('middlename'), getVal('lastname'), getVal('suffix')].filter(Boolean).join(' ')}`);
-        if(getVal('nickname')) vcfContent.push(`NICKNAME:${getVal('nickname')}`);
-        if(getVal('organization')) vcfContent.push(`ORG:${getVal('organization')}`);
-        if(getVal('title')) vcfContent.push(`TITLE:${getVal('title')}`);
-        if(getVal('role')) vcfContent.push(`ROLE:${getVal('role')}`);
-        if(getVal('work_url')) vcfContent.push(`URL;type=WORK:${getVal('work_url')}`);
-        if(getVal('email')) vcfContent.push(`EMAIL;type=INTERNET,HOME:${getVal('email')}`);
-        if(getVal('work_email')) vcfContent.push(`EMAIL;type=INTERNET,WORK:${getVal('work_email')}`);
-        if(getVal('home_phone')) vcfContent.push(`TEL;type=HOME,VOICE:${getVal('home_phone')}`);
-        if(getVal('work_phone')) vcfContent.push(`TEL;type=WORK,VOICE:${getVal('work_phone')}`);
-        if(getVal('cell_phone')) vcfContent.push(`TEL;type=CELL,VOICE:${getVal('cell_phone')}`);
-        if(getVal('pager_phone')) vcfContent.push(`TEL;type=PAGER:${getVal('pager_phone')}`);
-        if(getVal('home_fax')) vcfContent.push(`TEL;type=HOME,FAX:${getVal('home_fax')}`);
-        if(getVal('work_fax')) vcfContent.push(`TEL;type=WORK,FAX:${getVal('work_fax')}`);
-        if(getVal('home_street') || getVal('home_city')) vcfContent.push(`ADR;type=HOME:;;${getVal('home_street')};${getVal('home_city')};${getVal('home_state')};${getVal('home_postal')};${getVal('home_country')}`);
-        if(getVal('work_street') || getVal('work_city')) vcfContent.push(`ADR;type=WORK:;;${getVal('work_street')};${getVal('work_city')};${getVal('work_state')};${getVal('work_postal')};${getVal('work_country')}`);
-        if (photoData.base64 && photoData.type) { vcfContent.push(formatImageForVCard(photoData.base64, photoData.type, 'PHOTO')); }
-        if (logoData.base64 && logoData.type) { vcfContent.push(formatImageForVCard(logoData.base64, logoData.type, 'LOGO')); }
-        const socialProfiles = [ {type: 'linkedin', value: getVal('social_linkedin')}, {type: 'twitter', value: getVal('social_twitter')}, {type: 'facebook', value: getVal('social_facebook')}, {type: 'instagram', value: getVal('social_instagram')}, {type: 'threads', value: getVal('social_threads')}, {type: 'youtube', value: getVal('social_youtube')}, {type: 'tiktok', value: getVal('social_tiktok')}, {type: 'pinterest', value: getVal('social_pinterest')}, {type: 'discord', value: getVal('social_discord') ? `https://discord.com/users/${getVal('social_discord')}`:''}, {type: 'telegram', value: getVal('social_telegram')}, {type: 'whatsapp', value: getVal('social_whatsapp') ? `https://wa.me/${getVal('social_whatsapp').replace(/\D/g, '')}`:''}, {type: 'spotify', value: getVal('social_spotify')}, {type: 'airbnb', value: getVal('social_airbnb')} ];
-        socialProfiles.forEach(p => { if(p.value) vcfContent.push(`X-SOCIALPROFILE;type=${p.type}:${p.value}`); });
-        if(getVal('note')) vcfContent.push(`NOTE:${getVal('note').replace(/\r\n|\r|\n/g, '\\n')}`);
-        if(getVal('uid')) vcfContent.push(`UID:${getVal('uid')}`);
+        vcfContent.push(`N:${p('lastname')};${p('firstname')};${p('middlename')};${p('prefix')};${p('suffix')}`);
+        vcfContent.push(`FN:${[p('prefix'), p('firstname'), p('middlename'), p('lastname'), p('suffix')].filter(Boolean).join(' ')}`);
+        if(p('nickname')) vcfContent.push(`NICKNAME:${p('nickname')}`);
+        if(p('organization')) vcfContent.push(`ORG:${p('organization')}`);
+        if(p('title')) vcfContent.push(`TITLE:${p('title')}`);
+        if(p('role')) vcfContent.push(`ROLE:${p('role')}`);
+        if(p('work_url')) vcfContent.push(`URL;type=WORK:${p('work_url')}`);
+        if(p('email')) vcfContent.push(`EMAIL;type=INTERNET,HOME:${p('email')}`);
+        if(p('work_email')) vcfContent.push(`EMAIL;type=INTERNET,WORK:${p('work_email')}`);
+        if(p('home_phone')) vcfContent.push(`TEL;type=HOME,VOICE:${p('home_phone')}`);
+        if(p('work_phone')) vcfContent.push(`TEL;type=WORK,VOICE:${p('work_phone')}`);
+        if(p('cell_phone')) vcfContent.push(`TEL;type=CELL,VOICE:${p('cell_phone')}`);
+        if(p('pager_phone')) vcfContent.push(`TEL;type=PAGER:${p('pager_phone')}`);
+        if(p('home_fax')) vcfContent.push(`TEL;type=HOME,FAX:${p('home_fax')}`);
+        if(p('work_fax')) vcfContent.push(`TEL;type=WORK,FAX:${p('work_fax')}`);
+        if(p('home_street') || p('home_city')) vcfContent.push(`ADR;type=HOME:;;${p('home_street')};${p('home_city')};${p('home_state')};${p('home_postal')};${p('home_country')}`);
+        if(p('work_street') || p('work_city')) vcfContent.push(`ADR;type=WORK:;;${p('work_street')};${p('work_city')};${p('work_state')};${p('work_postal')};${p('work_country')}`);
+        
+        if (profile.photoData?.base64 && profile.photoData?.type) { 
+            vcfContent.push(formatImageForVCard(profile.photoData.base64, profile.photoData.type, 'PHOTO')); 
+        } else if (p('public-photo-url')) {
+            vcfContent.push(`PHOTO;VALUE=URI:${p('public-photo-url')}`);
+        }
+
+        if (profile.logoData?.base64 && profile.logoData?.type) { 
+            vcfContent.push(formatImageForVCard(profile.logoData.base64, profile.logoData.type, 'LOGO'));
+        } else if (p('public-logo-url')) {
+             vcfContent.push(`LOGO;VALUE=URI:${p('public-logo-url')}`);
+        }
+
+        const socialProfiles = [ {type: 'linkedin', value: p('social_linkedin')}, {type: 'twitter', value: p('social_twitter')}, {type: 'facebook', value: p('social_facebook')}, {type: 'instagram', value: p('social_instagram')}, {type: 'threads', value: p('social_threads')}, {type: 'youtube', value: p('social_youtube')}, {type: 'tiktok', value: p('social_tiktok')}, {type: 'pinterest', value: p('social_pinterest')}, {type: 'discord', value: p('social_discord') ? `https://discord.com/users/${p('social_discord')}`:''}, {type: 'telegram', value: p('social_telegram')}, {type: 'whatsapp', value: p('social_whatsapp') ? `https://wa.me/${p('social_whatsapp').replace(/\D/g, '')}`:''}, {type: 'spotify', value: p('social_spotify')}, {type: 'airbnb', value: p('social_airbnb')} ];
+        socialProfiles.forEach(sp => { if(sp.value) vcfContent.push(`X-SOCIALPROFILE;type=${sp.type}:${sp.value}`); });
+        
+        if(p('note')) vcfContent.push(`NOTE:${p('note').replace(/\r\n|\r|\n/g, '\\n')}`);
+        if(p('uid')) vcfContent.push(`UID:${p('uid')}`);
+        
         vcfContent.push(`REV:${new Date().toISOString()}`, 'END:VCARD');
         return vcfContent.map(foldVCardLine).join('\r\n');
     };
 
-    const downloadVCF = async () => {
-        const downloadBtnSpan = downloadBtn.querySelector('span');
-        downloadBtn.disabled = true;
-        downloadBtnSpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Generando...`;
+    const downloadVCF = async (profile) => {
+        const activeDownloadBtn = document.activeElement.closest('button') || downloadBtn;
+        const btnSpan = activeDownloadBtn.querySelector('span') || activeDownloadBtn;
+        const originalText = btnSpan.textContent;
+        
+        activeDownloadBtn.disabled = true;
+        btnSpan.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Generando...`;
+        
         try {
-            const vcfContent = await generateVCF();
+            const profileForVcf = JSON.parse(JSON.stringify(profile));
+
+            if (!profileForVcf.photoData?.base64 && profileForVcf['public-photo-url']) {
+                const fetchedPhoto = await imageUrlToBase64(profileForVcf['public-photo-url']);
+                if (fetchedPhoto) profileForVcf.photoData = fetchedPhoto;
+            }
+            if (!profileForVcf.logoData?.base64 && profileForVcf['public-logo-url']) {
+                const fetchedLogo = await imageUrlToBase64(profileForVcf['public-logo-url']);
+                if (fetchedLogo) profileForVcf.logoData = fetchedLogo;
+            }
+
+            const vcfContent = generateVCF(profileForVcf);
             const blob = new Blob([vcfContent], { type: 'text/vcard;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
-            const firstname = document.getElementById('firstname').value.trim();
-            const lastname = document.getElementById('lastname').value.trim();
-            const filename = `${firstname || 'contacto'}${lastname ? '_' + lastname : ''}`.replace(/ /g, '_') || 'contacto';
+            const filename = `${profile.firstname || 'contacto'}${profile.lastname ? '_' + profile.lastname : ''}`.replace(/ /g, '_') || 'contacto';
             a.href = url; a.download = `${filename}.vcf`;
             document.body.appendChild(a); a.click(); document.body.removeChild(a);
             URL.revokeObjectURL(url);
@@ -968,8 +1001,10 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error("Fallo al generar o descargar vCard:", error);
             showToast("Error al generar vCard. Revisa la consola para más detalles.");
         } finally {
-            downloadBtn.disabled = false;
-            downloadBtnSpan.textContent = 'Descargar vCard';
+            setTimeout(() => {
+                activeDownloadBtn.disabled = false;
+                btnSpan.textContent = originalText;
+            }, 500);
         }
     };
     
@@ -1005,7 +1040,6 @@ document.addEventListener('DOMContentLoaded', () => {
         renderCustomButtons();
         updatePublicProfilePreview();
     };
-
 
     // --- PROFILE MANAGEMENT (SAVE, LOAD, DELETE) ---
     const renderProfilesList = () => {
@@ -1053,11 +1087,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const saveCurrentProfile = async () => {
-        const saveBtn = document.getElementById('saveProfileBtnTop');
         const originalSaveText = 'Guardar Perfil';
         
-        saveBtn.disabled = true;
-        saveBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`;
+        saveProfileBtn.disabled = true;
+        saveProfileBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> Guardando...`;
 
         const profileData = { 
             id: currentProfileId || crypto.randomUUID(),
@@ -1075,15 +1108,16 @@ document.addEventListener('DOMContentLoaded', () => {
             profiles.push(profileData); 
         }
         currentProfileId = profileData.id;
-        localStorage.setItem('vcard-profiles', JSON.stringify(profiles));
-        renderProfilesList();
         
-        const webAppUrl = 'https://script.google.com/macros/s/AKfycbxUHErfbs5RwpB5lCVZjnYL_sYQuoxh-FfmpAp5zAMKYWp6SgS0y-wA1wi6oDqwNHF-/exec';
+        const webAppUrl = 'https://script.google.com/macros/s/AKfycbx4Bt3HwdbwVJG-GWQ0_Ug7iY0-j4gcd1NuWCqjrZtBN38A4mmAtd1HGCASWmKDF405/exec';
         if (!webAppUrl || webAppUrl === 'YOUR_WEB_APP_URL') {
-            showToast("Guardado local. Configure la URL de la hoja para sincronizar.");
-            console.error("🚨 Google Apps Script Web App URL is not set.");
-            saveBtn.disabled = false;
-            saveBtn.textContent = originalSaveText;
+            localStorage.setItem('vcard-profiles', JSON.stringify(profiles));
+            localStorage.setItem('vcard-last-profile-id', profileData.id);
+            renderProfilesList();
+            showToast("Guardado localmente. Configure la URL del servidor para compartir.");
+            saveProfileBtn.disabled = false;
+            saveProfileBtn.textContent = originalSaveText;
+            updatePublicProfilePreview();
             return;
         }
 
@@ -1105,18 +1139,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (result.status === 'success' && result.data) {
                 showToast("¡Perfil guardado y sincronizado!");
-                
                 profileData.uid = result.data.uid;
-                profileData.vcf_url = result.data.vcfUrl;
                 document.getElementById('uid').value = result.data.uid;
-                
-                const finalIndex = profiles.findIndex(p => p.id === profileData.id);
-                if (finalIndex > -1) {
-                    profiles[finalIndex] = profileData;
-                    localStorage.setItem('vcard-profiles', JSON.stringify(profiles));
-                }
-                  console.log("Successfully synced. VCF URL:", profileData.vcf_url);
-                  updatePublicProfilePreview(); // Re-render preview to show download button
             } else {
                 throw new Error(result.message || "Unknown error from Google Apps Script");
             }
@@ -1124,8 +1148,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error syncing to Google Sheet:', error);
             showToast("Guardado localmente, pero falló la sincronización.");
         } finally {
-            saveBtn.disabled = false;
-            saveBtn.textContent = originalSaveText;
+            const finalIndex = profiles.findIndex(p => p.id === profileData.id);
+            if (finalIndex > -1) profiles[finalIndex] = profileData;
+            localStorage.setItem('vcard-profiles', JSON.stringify(profiles));
+            localStorage.setItem('vcard-last-profile-id', profileData.id);
+            renderProfilesList();
+            saveProfileBtn.disabled = false;
+            saveProfileBtn.textContent = originalSaveText;
+            updatePublicProfilePreview();
         }
     };
     
@@ -1136,40 +1166,42 @@ document.addEventListener('DOMContentLoaded', () => {
         clearForm();
         
         allInputIds.forEach(inputId => {
-            if (document.getElementById(inputId) && profile[inputId]) {
+            if (document.getElementById(inputId)) {
                 document.getElementById(inputId).value = profile[inputId] || '';
             }
         });
         publicProfileSettingIds.forEach(inputId => {
-            if (document.getElementById(inputId) && profile[inputId]) {
+            if (document.getElementById(inputId)) {
                 document.getElementById(inputId).value = profile[inputId] || '';
             }
         });
         
-        if (profile.photoData && profile.photoData.base64 && profile.photoData.type) {
-            photoData = profile.photoData;
-             // Use the base64 data to reconstruct the preview without needing the original file
-               const previewPhoto = document.getElementById('preview-photo');
-               const publicPreviewPhoto = document.getElementById('public-preview-photo');
-               const src = `data:${photoData.type};base64,${photoData.base64}`;
-               previewPhoto.src = src;
-               publicPreviewPhoto.src = src;
+        photoData = profile.photoData || { base64: null, type: null };
+        if (photoData.base64 && photoData.type) {
+            const src = `data:${photoData.type};base64,${photoData.base64}`;
+            document.getElementById('preview-photo').src = src;
+            document.getElementById('public-preview-photo').src = src;
+        } else if (profile['public-photo-url']) {
+             handleImageUrlChange(profile['public-photo-url'], photoData, photoUpload, 'preview-photo');
         }
-        if (profile.logoData && profile.logoData.base64 && profile.logoData.type) {
-            logoData = profile.logoData;
+
+        logoData = profile.logoData || { base64: null, type: null };
+        if (logoData.base64 && logoData.type) {
+            const src = `data:${logoData.type};base64,${logoData.base64}`;
             const previewLogo = document.getElementById('preview-logo');
             const publicPreviewLogo = document.getElementById('public-preview-logo');
-            const src = `data:${logoData.type};base64,${logoData.base64}`;
             previewLogo.src = src;
             publicPreviewLogo.src = src;
             previewLogo.style.display = 'block';
             publicPreviewLogo.style.display = 'block';
+        } else if (profile['public-logo-url']) {
+            handleImageUrlChange(profile['public-logo-url'], logoData, logoUpload, 'preview-logo');
         }
 
         customButtons = profile.customButtons || [];
 
         currentProfileId = id;
-        localStorage.setItem('vcard-last-profile-id', id); // Keep track of the last loaded profile
+        localStorage.setItem('vcard-last-profile-id', id);
         renderCustomButtons();
         updateVCardPreview(); 
         updatePublicProfilePreview();
@@ -1190,7 +1222,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- EVENT LISTENERS ---
-    // Top Bar & Panels
     themeToggle.addEventListener('click', toggleTheme);
     saveProfileBtn.addEventListener('click', saveCurrentProfile);
     newProfileBtn.addEventListener('click', () => { clearForm(); toggleProfilesPanel(); });
@@ -1198,28 +1229,34 @@ document.addEventListener('DOMContentLoaded', () => {
     profilesCloseBtn.addEventListener('click', toggleProfilesPanel);
     panelOverlay.addEventListener('click', toggleProfilesPanel);
     
-    // Profile List Clicks (Load/Delete)
     profilesList.addEventListener('click', (e) => {
         const target = e.target.closest('li');
-        const deleteButton = e.target.closest('button');
-        if (deleteButton && deleteButton.dataset.deleteId) { deleteProfile(deleteButton.dataset.deleteId); } 
+        const deleteButton = e.target.closest('button[data-delete-id]');
+        if (deleteButton) { deleteProfile(deleteButton.dataset.deleteId); } 
         else if (target && target.dataset.id) { loadProfile(target.dataset.id, true); }
     });
     
-    // Tabs
     vcardTabBtn.addEventListener('click', () => switchTab('vcard'));
     publicProfileTabBtn.addEventListener('click', () => switchTab('public'));
 
-    // Form Inputs
     form.addEventListener('input', () => {
         updateVCardPreview();
         updatePublicProfilePreview();
     });
-    downloadBtn.addEventListener('click', downloadVCF);
+
+    downloadBtn.addEventListener('click', async () => {
+        const profileData = {};
+        allInputIds.forEach(id => profileData[id] = document.getElementById(id)?.value || '');
+        publicProfileSettingIds.forEach(id => profileData[id] = document.getElementById(id)?.value || '');
+        profileData.photoData = photoData;
+        profileData.logoData = logoData;
+        profileData.customButtons = customButtons;
+        await downloadVCF(profileData);
+    });
+
     photoUpload.addEventListener('change', (e) => handleFileChange(e.target.files[0], photoData, 'preview-photo'));
     logoUpload.addEventListener('change', (e) => handleFileChange(e.target.files[0], logoData, 'preview-logo'));
 
-    // Public Profile Settings Inputs
     document.querySelector('#public-profile-tab-content').addEventListener('input', (e) => {
         if (publicProfileSettingIds.includes(e.target.id)) {
             updatePublicProfilePreview();
@@ -1229,10 +1266,8 @@ document.addEventListener('DOMContentLoaded', () => {
     photoUrlInput.addEventListener('input', (e) => handleImageUrlChange(e.target.value, photoData, photoUpload, 'preview-photo'));
     logoUrlInput.addEventListener('input', (e) => handleImageUrlChange(e.target.value, logoData, logoUpload, 'preview-logo'));
 
-    // Shareable URL buttons
     copyUrlBtn.addEventListener('click', () => copyToClipboard(shareableUrlInput.value));
 
-    // Custom Buttons
     addCustomButtonBtn.addEventListener('click', addCustomButton);
     customButtonsContainer.addEventListener('input', (e) => {
         if(e.target.dataset.index) {
@@ -1246,14 +1281,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Public Profile Buttons (Event Delegation)
-    document.getElementById('public-preview-buttons-container').addEventListener('click', e => {
-        if (e.target.closest('#public-download-vcf-btn')) {
-            downloadVCF();
+    document.getElementById('public-preview-buttons-container').addEventListener('click', async (e) => {
+        const downloadButton = e.target.closest('#public-download-vcf-btn');
+        if (downloadButton) {
+            let profileToDownload = publicProfileData; 
+            if (!profileToDownload) { 
+                profileToDownload = {};
+                allInputIds.forEach(id => profileToDownload[id] = document.getElementById(id)?.value || '');
+                publicProfileSettingIds.forEach(id => profileToDownload[id] = document.getElementById(id)?.value || '');
+                profileToDownload.photoData = photoData;
+                profileToDownload.logoData = logoData;
+                profileToDownload.customButtons = customButtons;
+            }
+            if(profileToDownload) await downloadVCF(profileToDownload);
         }
     });
 
-    // Work Info Links (Copy)
     workInfoLinksContainer.addEventListener('click', (e) => {
         const button = e.target.closest('.copy-btn');
         if (button && button.dataset.copy) {
@@ -1261,7 +1304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // --- INITIALIZATION ---
+    // --- INITIALIZATION & PUBLIC VIEW LOGIC ---
     const enterPublicViewMode = () => {
         document.querySelector('.top-menu-bar').classList.add('hidden');
         document.querySelector('main > div:first-child').classList.add('hidden');
@@ -1282,48 +1325,88 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const style = document.createElement('style');
         style.innerHTML = `
-            /* Public View Mode Styles */
-            html, body {
-                height: 100%;
-                margin: 0;
-                padding: 0;
-            }
-            body {
-                padding-top: 0 !important;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background-color: var(--background-color) !important;
-            }
-            #app-container {
-                max-width: 550px;
-                width: 100%;
-                padding: 0 !important;
-                margin: 0 !important;
-            }
-            main {
-                padding: 0;
-            }
-            #public-profile-preview-container .w-full.max-w-sm {
-                max-width: 100%;
-                border-radius: 0;
-                min-height: 100vh;
-                box-shadow: none;
-            }
+            html, body { height: 100%; margin: 0; padding: 0; }
+            body { padding-top: 0 !important; display: flex; align-items: center; justify-content: center; background-color: var(--background-color) !important; }
+            #app-container { max-width: 550px; width: 100%; padding: 0 !important; margin: 0 !important; }
+            main { padding: 0; }
+            #public-profile-preview-container .w-full.max-w-sm { max-width: 100%; border-radius: 0; min-height: 100vh; box-shadow: none; }
             @media (min-width: 551px) {
-                #public-profile-preview-container .w-full.max-w-sm {
-                     border-radius: 1rem; /* Restore rounded corners on larger screens */
-                     min-height: auto;
-                     box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-                }
-                 body {
-                     padding: 2rem 0 !important;
-                 }
+                #public-profile-preview-container .w-full.max-w-sm { border-radius: 1rem; min-height: auto; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+                body { padding: 2rem 0 !important; }
             }
         `;
         document.head.appendChild(style);
-
         switchTab('public');
+    };
+    
+    const renderPublicProfileFromData = (profile) => {
+        publicProfileData = profile; // Store for VCF download
+        document.body.style.backgroundColor = profile['public-background-color'] || '#f7fafc';
+        
+        const fullName = [profile.prefix, profile.firstname, profile.middlename, profile.lastname, profile.suffix].filter(Boolean).join(' ');
+        document.getElementById('public-preview-name').textContent = fullName || 'Perfil sin Nombre';
+        document.getElementById('public-preview-title-org').textContent = (profile.title && profile.organization) ? `${profile.title} en ${profile.organization}` : profile.title || profile.organization || '';
+
+        const socialFields = [ { type: 'linkedin', url: profile.social_linkedin }, { type: 'twitter', url: profile.social_twitter }, { type: 'facebook', url: profile.social_facebook }, { type: 'instagram', url: profile.social_instagram }, { type: 'threads', url: profile.social_threads }, { type: 'youtube', url: profile.social_youtube }, { type: 'tiktok', url: profile.social_tiktok }, { type: 'pinterest', url: profile.social_pinterest }, { type: 'discord', url: profile.social_discord }, { type: 'telegram', url: profile.social_telegram }, { type: 'whatsapp', url: profile.social_whatsapp }, { type: 'spotify', url: profile.social_spotify }, { type: 'airbnb', url: profile.social_airbnb } ];
+        document.getElementById('public-preview-social').innerHTML = socialFields.filter(s => s.url).map(s => `<a href="${formatActionURL(s.url)}" target="_blank" class="flex-shrink-0 flex items-center justify-center w-9 h-9 aspect-square text-white bg-black hover:bg-gray-700 transition-all rounded-full" title="${s.type}">${socialIconSVG(s.type)}</a>`).join('');
+
+        document.getElementById('public-preview-photo').src = profile['public-photo-url'] || 'https://placehold.co/150x150/e2e8f0/64748b?text=Photo';
+        const logoEl = document.getElementById('public-preview-logo');
+        if (profile['public-logo-url']) {
+            logoEl.src = profile['public-logo-url'];
+            logoEl.style.display = 'block';
+        } else {
+            logoEl.style.display = 'none';
+        }
+
+        const primaryColor = profile['public-primary-color'] || '#967e2d';
+        document.documentElement.style.setProperty('--primary-color', primaryColor);
+        document.getElementById('public-preview-footer').style.backgroundColor = primaryColor;
+        document.getElementById('public-preview-header-line').style.backgroundColor = primaryColor;
+        document.getElementById('public-preview-card-bg').style.backgroundColor = profile['public-background-color'] || '#ffffff';
+        document.getElementById('public-preview-header-img').src = profile['public-header-bg-url'] || 'https://bucket.mlcdn.com/a/3336/3336910/images/cc22ad61e2ee0777b13492321845a5b0d1242e75.png';
+
+        const buttonsContainer = document.getElementById('public-preview-buttons-container');
+        const buttonShape = profile['public-button-shape'] || 'rounded-lg';
+        buttonsContainer.innerHTML = '';
+        
+        const downloadBtnEl = document.createElement('button');
+        downloadBtnEl.id = 'public-download-vcf-btn';
+        downloadBtnEl.className = `preview-action-button block w-full text-center font-bold h-14 px-4 flex items-center justify-center shadow-md focus:outline-none transition-transform transform hover:scale-105 ${buttonShape}`;
+        downloadBtnEl.textContent = 'Descargar Contacto';
+        buttonsContainer.appendChild(downloadBtnEl);
+
+        let fetchedCustomButtons = profile.customButtons || [];
+        if (typeof fetchedCustomButtons === 'string' && fetchedCustomButtons) {
+            try { fetchedCustomButtons = JSON.parse(fetchedCustomButtons); } catch (e) { console.error('Error parsing custom buttons', e); fetchedCustomButtons = []; }
+        }
+
+        fetchedCustomButtons.forEach(button => {
+            if (button.text && button.url) {
+                const customBtn = document.createElement('a');
+                customBtn.href = formatActionURL(button.url);
+                customBtn.target = "_blank";
+                customBtn.className = `preview-action-button block w-full text-center font-bold h-14 px-4 flex items-center justify-center shadow-md focus:outline-none transition-transform transform hover:scale-105 ${buttonShape}`;
+                customBtn.textContent = button.text;
+                buttonsContainer.appendChild(customBtn);
+            }
+        });
+
+        const mapContainer = document.getElementById('public-preview-map-container');
+        const workAddress = [profile.work_street, profile.work_city, profile.work_state, profile.work_postal, profile.work_country].filter(Boolean).join(', ');
+        if (workAddress) {
+            const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyC_g-ajvShrWpvSflLh7Um-gNAACVtHrWw&q=${encodeURIComponent(workAddress)}`;
+            document.getElementById('public-preview-map').src = mapUrl;
+            mapContainer.classList.remove('hidden');
+        } else {
+            mapContainer.classList.add('hidden');
+        }
+    };
+
+    const renderPublicProfileError = () => {
+        enterPublicViewMode();
+        document.getElementById('public-preview-name').textContent = 'Error';
+        document.getElementById('public-preview-title-org').textContent = 'No se pudo cargar el perfil.';
     };
 
     const fetchAndDisplayPublicProfile = async (uid) => {
@@ -1336,115 +1419,39 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch(fetchUrl);
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error("Server response was not OK:", response.status, errorText);
                 throw new Error('El perfil no se encontró o hubo un error en el servidor.');
             }
 
             const result = await response.json();
             if (result && result.status === 'success' && result.data) {
-                const profile = result.data;
-                
-                document.body.style.backgroundColor = profile['public-background-color'] || '#f7fafc';
-
-                const fullName = [profile.prefix, profile.firstname, profile.middlename, profile.lastname, profile.suffix].filter(Boolean).join(' ');
-                document.getElementById('public-preview-name').textContent = fullName || 'Perfil sin Nombre';
-                document.getElementById('public-preview-title-org').textContent = (profile.title && profile.organization) ? `${profile.title} en ${profile.organization}` : profile.title || profile.organization || '';
-
-                const socialFields = [ { type: 'linkedin', url: profile.social_linkedin }, { type: 'twitter', url: profile.social_twitter }, { type: 'facebook', url: profile.social_facebook }, { type: 'instagram', url: profile.social_instagram }, { type: 'threads', url: profile.social_threads }, { type: 'youtube', url: profile.social_youtube }, { type: 'tiktok', url: profile.social_tiktok }, { type: 'pinterest', url: profile.social_pinterest }, { type: 'discord', url: profile.social_discord ? `https://discord.com/users/${profile.social_discord}`:'' }, { type: 'telegram', url: profile.social_telegram }, { type: 'whatsapp', url: profile.social_whatsapp ? `https://wa.me/${profile.social_whatsapp.replace(/\D/g, '')}`:'' }, { type: 'spotify', url: profile.social_spotify }, { type: 'airbnb', url: profile.social_airbnb } ];
-                document.getElementById('public-preview-social').innerHTML = socialFields.filter(s => s.url).map(s => `<a href="${formatActionURL(s.url)}" target="_blank" class="flex-shrink-0 flex items-center justify-center w-9 h-9 text-white bg-black hover:bg-gray-700 transition-all rounded-full" title="${s.type}">${socialIconSVG(s.type)}</a>`).join('');
-
-                document.getElementById('public-preview-photo').src = profile['public-photo-url'] || 'https://placehold.co/150x150/e2e8f0/64748b?text=Photo';
-                const logoEl = document.getElementById('public-preview-logo');
-                if (profile['public-logo-url']) {
-                    logoEl.src = profile['public-logo-url'];
-                    logoEl.style.display = 'block';
-                } else {
-                    logoEl.style.display = 'none';
-                }
-
-                const primaryColor = profile['public-primary-color'] || '#967e2d';
-                document.documentElement.style.setProperty('--primary-color', primaryColor);
-                document.getElementById('public-preview-footer').style.backgroundColor = primaryColor;
-                document.getElementById('public-preview-header-line').style.backgroundColor = primaryColor;
-                document.getElementById('public-preview-card-bg').style.backgroundColor = profile['public-background-color'] || '#ffffff';
-                document.getElementById('public-preview-header-img').src = profile['public-header-bg-url'] || 'https://bucket.mlcdn.com/a/3336/3336910/images/cc22ad61e2ee0777b13492321845a5b0d1242e75.png';
-
-                const buttonsContainer = document.getElementById('public-preview-buttons-container');
-                const buttonShape = profile['public-button-shape'] || 'rounded-lg';
-                buttonsContainer.innerHTML = '';
-                
-                if (profile.vcf_url) {
-                    const downloadBtnEl = document.createElement('a');
-                    downloadBtnEl.href = profile.vcf_url;
-                    downloadBtnEl.className = `preview-action-button block w-full text-center font-bold h-14 px-4 flex items-center justify-center shadow-md focus:outline-none transition-transform transform hover:scale-105 ${buttonShape}`;
-                    downloadBtnEl.textContent = 'Descargar Contacto';
-                    buttonsContainer.appendChild(downloadBtnEl);
-                }
-
-                let fetchedCustomButtons = [];
-                if (typeof profile.customButtons === 'string' && profile.customButtons) {
-                    try { fetchedCustomButtons = JSON.parse(profile.customButtons); } catch (e) { console.error('Error al analizar botones personalizados de los datos obtenidos:', e); }
-                } else if (Array.isArray(profile.customButtons)) {
-                    fetchedCustomButtons = profile.customButtons;
-                }
-
-                fetchedCustomButtons.forEach(button => {
-                    if (button.text && button.url) {
-                        const customBtn = document.createElement('a');
-                        customBtn.href = formatActionURL(button.url);
-                        customBtn.target = "_blank";
-                        customBtn.className = `preview-action-button block w-full text-center font-bold h-14 px-4 flex items-center justify-center shadow-md focus:outline-none transition-transform transform hover:scale-105 ${buttonShape}`;
-                        customBtn.textContent = button.text;
-                        buttonsContainer.appendChild(customBtn);
-                    }
-                });
-
-                const mapContainer = document.getElementById('public-preview-map-container');
-                const workAddress = [profile.work_street, profile.work_city, profile.work_state, profile.work_postal, profile.work_country].filter(Boolean).join(', ');
-                if (workAddress) {
-                    const mapUrl = `https://www.google.com/maps/embed/v1/place?key=AIzaSyC_g-ajvShrWpvSflLh7Um-gNAACVtHrWw&q=${encodeURIComponent(workAddress)}`;
-                    document.getElementById('public-preview-map').src = mapUrl;
-                    mapContainer.classList.remove('hidden');
-                } else {
-                    mapContainer.classList.add('hidden');
-                }
-
+                renderPublicProfileFromData(result.data);
             } else {
                 throw new Error(result.message || 'Se recibieron datos de perfil no válidos.');
             }
         } catch (error) {
             console.error('Fallo al obtener el perfil público:', error);
-            document.getElementById('public-preview-name').textContent = 'Error';
-            document.getElementById('public-preview-title-org').textContent = 'No se pudo cargar el perfil.';
+            renderPublicProfileError();
         }
     };
 
-// Replace the entire initializeApp function with this:
-const initializeApp = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const profileUidFromUrl = urlParams.get('profile');
+    const initializeApp = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const profileUidFromUrl = urlParams.get('profile');
 
-    if (profileUidFromUrl) {
-        // --- PUBLIC VIEW MODE ---
-        fetchAndDisplayPublicProfile(profileUidFromUrl);
-    } else {
-        // --- EDITOR MODE ---
-        loadProfilesFromStorage();
-        if (profiles.length > 0) {
+        if (profileUidFromUrl) {
+            fetchAndDisplayPublicProfile(profileUidFromUrl);
+        } else {
+            loadProfilesFromStorage();
             const lastProfileId = localStorage.getItem('vcard-last-profile-id');
             const profileToLoad = profiles.find(p => p.id === lastProfileId) || profiles[0];
-            if (profileToLoad && profileToLoad.id) {
+            if (profileToLoad) {
                 loadProfile(profileToLoad.id);
             } else {
                 clearForm();
             }
-        } else {
-            clearForm();
+            switchTab('vcard');
         }
-        switchTab('vcard');
-    }
-};
+    };
 
     initializeApp();
 });
